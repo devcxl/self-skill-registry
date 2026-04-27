@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+worker-configuration.d.ts
+.mf/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Turborepo
+.turbo/
+
+# Wrangler
+.wrangler/
+
+# Testing
+coverage/
+
+# Debug
+*.log
