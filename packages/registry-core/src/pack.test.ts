@@ -31,20 +31,22 @@ describe('validateTarPath', () => {
 
 describe('sha256', () => {
   it('should compute hash of a buffer', async () => {
-    const hash = await sha256(Buffer.from('hello world'));
+    const data = new TextEncoder().encode('hello world');
+    const hash = await sha256(data);
     expect(hash).toHaveLength(64);
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('should produce different hashes for different inputs', async () => {
-    const h1 = await sha256(Buffer.from('a'));
-    const h2 = await sha256(Buffer.from('b'));
+    const h1 = await sha256(new TextEncoder().encode('a'));
+    const h2 = await sha256(new TextEncoder().encode('b'));
     expect(h1).not.toEqual(h2);
   });
 
   it('should produce consistent hashes', async () => {
-    const h1 = await sha256(Buffer.from('test'));
-    const h2 = await sha256(Buffer.from('test'));
+    const data = new TextEncoder().encode('test');
+    const h1 = await sha256(data);
+    const h2 = await sha256(data);
     expect(h1).toEqual(h2);
   });
 });
