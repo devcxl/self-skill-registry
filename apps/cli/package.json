@@ -1,0 +1,21 @@
+{
+  "name": "@devcxl/skillr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/main.ts",
+  "bin": {
+    "skillr": "./src/main.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@types/node": "^25.6.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
+  }
+}

@@ -1,0 +1,42 @@
+# skill-registry Worker — Wrangler configuration
+# Local development and Cloudflare deployment
+
+name = "skill-registry"
+main = "src/index.ts"
+compatibility_date = "2025-04-27"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "skill-registry"
+database_id = "skill-registry"
+
+# R2 Bucket (for tarball storage)
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "skill-registry-packages"
+
+# Environment-specific overrides
+[env.staging]
+name = "skill-registry-staging"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "skill-registry-staging"
+database_id = "staging-db-id"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "skill-registry-packages-staging"
+
+[env.production]
+name = "skill-registry-production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "skill-registry-production"
+database_id = "production-db-id"
+
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "skill-registry-packages-production"
