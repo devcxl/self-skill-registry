@@ -1,12 +1,16 @@
 import { Hono } from 'hono';
 import type { HonoEnv } from './types/bindings';
 import { RegistryRepository } from './db';
-import { toReviewResponse, toSkillResponse, type SkillResponse } from './types/db';
+import { toReviewResponse, toSkillResponse } from './types/db';
 import skills from './routes/skills';
 import reviews from './routes/reviews';
 import search from './routes/search';
 import download from './routes/download';
+import auth from './routes/auth';
+import settings from './routes/settings';
+import admin from './routes/admin';
 import { HomePage, SkillsPage, SkillDetailPage, ErrorPage } from './ui/pages';
+import { Layout } from './ui/layout';
 
 const app = new Hono<HonoEnv>();
 
@@ -24,9 +28,91 @@ app.get('/health', async (c) => {
   }
 });
 
+// ── Auth Routes ───────────────────────────────────────────────────────
+
+app.route('/auth', auth);
+
+// ── Settings (token management) ───────────────────────────────────────
+
+app.route('/settings', settings);
+
+// ── Admin API ─────────────────────────────────────────────────────────
+
+app.route('/admin', admin);
+
+// ── Admin UI Page ─────────────────────────────────────────────────────
+
+app.get('/admin', async (c) => {
+  const repo = new RegistryRepository(c.env.DB);
+  const { skills: allSkills } = await repo.listSkills({ includeAll: true });
+  const pending = allSkills.filter((s) => s.review_status !== 'approved');
+
+  return c.html(
+    <Layout title="Admin">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
+        <p class="text-gray-600">Manage skills and users</p>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          Pending / Non-Approved Skills ({pending.length})
+        </h2>
+        {pending.length === 0 ? (
+          <p class="text-gray-500">No pending skills.</p>
+        ) : (
+          <div class="space-y-3">
+            {pending.map((s) => (
+              <div class="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+                <div>
+                  <h3 class="font-semibold text-gray-900">{s.name}</h3>
+                  <p class="text-sm text-gray-500">
+                    v{s.latest_version} · Score: {s.latest_score} · Status:{' '}
+                    <span class="font-medium text-yellow-600">{s.review_status}</span>
+                  </p>
+                </div>
+                <div class="flex gap-2">
+                  <form action={`/admin/skills/${s.name}/approve`} method="post">
+                    <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                      Approve
+                    </button>
+                  </form>
+                  <form action={`/admin/skills/${s.name}/reject`} method="post">
+                    <button type="submit" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                      Reject
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">All Skills</h2>
+        <div class="space-y-2">
+          {allSkills.map((s) => (
+            <div class="bg-white rounded shadow-sm border p-3 flex items-center justify-between">
+              <div>
+                <a href={`/skills/${s.name}`} class="font-medium text-gray-900 hover:text-blue-600">
+                  {s.name}
+                </a>
+                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                  {s.review_status}
+                </span>
+              </div>
+              <span class="text-sm text-gray-500">v{s.latest_version}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>,
+  );
+});
+
 // ── Web UI Routes ────────────────────────────────────────────────────
 
-// Home page
 app.get('/', async (c) => {
   const repo = new RegistryRepository(c.env.DB);
   const { skills: list } = await repo.listSkills();
@@ -34,7 +120,6 @@ app.get('/', async (c) => {
   return c.html(<HomePage skills={skillList} />);
 });
 
-// Skills list page
 app.get('/skills', async (c) => {
   const repo = new RegistryRepository(c.env.DB);
   const q = c.req.query('q');
@@ -56,7 +141,6 @@ app.get('/skills', async (c) => {
   );
 });
 
-// Skill detail page
 app.get('/skills/:name', async (c) => {
   const name = c.req.param('name');
   const repo = new RegistryRepository(c.env.DB);
@@ -82,7 +166,6 @@ v1.route('/skills', download);
 v1.route('/reviews', reviews);
 v1.route('/search', search);
 
-// Reviews for a specific skill
 v1.get('/skills/:name/reviews', async (c) => {
   const name = c.req.param('name');
   const repo = new RegistryRepository(c.env.DB);
