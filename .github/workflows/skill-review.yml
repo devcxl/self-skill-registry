@@ -1,0 +1,213 @@
+name: Skill Review
+
+# Trigger: PRs that modify skills/ directory, SKILL.md, or related files
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.opencode/skills/skill-evaluator/**'
+
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+
+jobs:
+  # ── TS Pre-check ──────────────────────────────────────────────────
+  precheck:
+    runs-on: ubuntu-latest
+    outputs:
+      changed-skills: ${{ steps.find-skills.outputs.skills }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspace
+        run: npm run build
+
+      - name: Find changed skills
+        id: find-skills
+        run: |
+          # Get list of changed directories under skills/
+          SKILLS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            grep '^skills/' | \
+            cut -d'/' -f2 | \
+            sort -u | \
+            tr '\n' ',' | \
+            sed 's/,$//')
+          echo "skills=$SKILLS" >> $GITHUB_OUTPUT
+          echo "Found changed skills: $SKILLS"
+
+      - name: Validate single skill per PR
+        run: |
+          SKILLS="${{ steps.find-skills.outputs.skills }}"
+          COUNT=$(echo "$SKILLS" | tr ',' '\n' | wc -l)
+          if [ "$COUNT" -gt 1 ]; then
+            echo "❌ Multiple skills changed in this PR: $SKILLS"
+            echo "Each PR must contain exactly ONE skill change."
+            exit 1
+          fi
+          if [ -z "$SKILLS" ]; then
+            echo "No skill changes detected in skills/ directory."
+            exit 1
+          fi
+          echo "✅ Single skill PR: $SKILLS"
+
+      - name: Run TS pre-check (validate + security)
+        run: |
+          npx tsx scripts/validate-skills.ts
+          npx tsx scripts/build-registry.ts
+          npx tsx scripts/pack-skills.ts
+
+      - name: Run tests
+        run: npm test
+
+  # ── AI Review ─────────────────────────────────────────────────────
+  review:
+    needs: precheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build workspace
+        run: npm run build
+
+      - name: Create artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Run AI review (OpenCode)
+        uses: anomalyco/opencode/github@latest
+        with:
+          config: .opencode
+          command: |
+            Review the skill that was changed in this PR.
+            Follow .opencode/skills/skill-evaluator/SKILL.md instructions.
+            Produce:
+            1. skills/<skill-name>/EVAL.md
+            2. artifacts/skill-review.json
+          timeout: 30
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify EVAL.md exists
+        run: |
+          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
+          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
+          EVAL_PATH="skills/${SKILL}/EVAL.md"
+          if [ ! -f "$EVAL_PATH" ]; then
+            echo "❌ EVAL.md not found at $EVAL_PATH"
+            exit 1
+          fi
+          echo "✅ EVAL.md found at $EVAL_PATH"
+
+      - name: Verify skill-review.json exists
+        run: |
+          if [ ! -f "artifacts/skill-review.json" ]; then
+            echo "❌ skill-review.json not found at artifacts/skill-review.json"
+            exit 1
+          fi
+          echo "✅ skill-review.json found"
+
+      - name: Validate review JSON schema
+        run: |
+          npx tsx scripts/validate-review-report.ts artifacts/skill-review.json
+
+      - name: Check review status
+        id: check-status
+        run: |
+          STATUS=$(npx tsx -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
+            console.log(data.reviewStatus);
+          ")
+          echo "Review status: $STATUS"
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
+          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
+
+          if [ "$STATUS" = "rejected" ]; then
+            echo "❌ Skill rejected by AI review. See EVAL.md for details."
+            exit 1
+          fi
+
+          if [ "$STATUS" = "needs_manual_review" ]; then
+            echo "⚠️  Skill requires manual review. An admin must approve before publishing."
+            # Soft fail — blocks merge but doesn't fail the workflow
+            # (hard fail only for rejected)
+          fi
+
+      - name: Commit EVAL.md to PR
+        run: |
+          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
+          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
+          EVAL_PATH="skills/${SKILL}/EVAL.md"
+
+          git config user.name "skill-review[bot]"
+          git config user.email "skill-review[bot]@users.noreply.github.com"
+
+          git add "$EVAL_PATH"
+          if git diff --staged --quiet; then
+            echo "No changes to commit in EVAL.md"
+          else
+            git commit -m "chore: add AI review evaluation for ${SKILL} [skip ci]"
+            git push
+            echo "✅ EVAL.md committed to PR branch"
+          fi
+
+      - name: Post review status comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const status = process.env.REVIEW_STATUS || 'unknown';
+            const emoji = status === 'approved' ? '✅' : status === 'rejected' ? '❌' : '⚠️';
+            
+            let body = `${emoji} **AI Skill Review: ${status}**\n\n`;
+            
+            try {
+              const summary = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
+              body += `**Score:** ${summary.totalScore}/100\n\n`;
+              body += `**Summary:** ${summary.summary}\n\n`;
+              if (summary.findings && summary.findings.length > 0) {
+                body += `### Findings (${summary.findings.length})\n`;
+                for (const f of summary.findings.slice(0, 10)) {
+                  body += `- **${f.priority}** [${f.criterion}] ${f.description}\n`;
+                }
+              }
+            } catch {
+              body += 'Review report details unavailable.\n';
+            }
+
+            if (status === 'rejected') {
+              body += '\n> 🚫 **This skill is rejected and cannot be merged.** Fix the issues above and resubmit.';
+            } else if (status === 'needs_manual_review') {
+              body += '\n> ⚠️ **This skill requires manual admin review.** An administrator must approve before publishing.';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+        env:
+          REVIEW_STATUS: ${{ steps.check-status.outputs.status }}
