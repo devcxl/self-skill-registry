@@ -2,7 +2,7 @@
 # Local development and Cloudflare deployment
 
 name = "skill-registry"
-main = "src/index.ts"
+main = "src/index.tsx"
 compatibility_date = "2025-04-27"
 
 # D1 Database
