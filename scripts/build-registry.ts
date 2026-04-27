@@ -1,6 +1,6 @@
 /**
  * Build registry manifest and index from skills/ directory.
- * Usage: tsx scripts/build-registry.ts
+ * Usage: tsx scripts/build-registry.ts [--source-commit <sha>]
  *
  * Scans skills/, reads frontmatter, and generates:
  * - artifacts/index.json
@@ -9,14 +9,23 @@
 
 import { readdirSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseFrontmatter } from '@devcxl/registry-core';
-import type { SkillManifest, RegistryIndex, Skill } from '@devcxl/registry-core';
+import { parseFrontmatter, buildManifest, manifestToSkill, buildIndex } from '@devcxl/registry-core';
+import type { SkillManifest, Skill } from '@devcxl/registry-core';
 
 const SKILLS_DIR = join(process.cwd(), 'skills');
 const ARTIFACTS_DIR = join(process.cwd(), 'artifacts');
 const MANIFESTS_DIR = join(ARTIFACTS_DIR, 'manifests');
 
+function getSourceCommit(): string | undefined {
+  const args = process.argv.slice(2);
+  const idx = args.indexOf('--source-commit');
+  if (idx !== -1 && args[idx + 1]) return args[idx + 1];
+  return process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA;
+}
+
 function main(): void {
+  const sourceCommit = getSourceCommit();
+
   if (!existsSync(SKILLS_DIR)) {
     console.log('No skills directory found. Skipping build.');
     process.exit(0);
@@ -41,45 +50,19 @@ function main(): void {
     const content = readFileSync(skillMdPath, 'utf-8');
     const fm = parseFrontmatter(content);
 
-    // Build manifest
-    const manifest: SkillManifest = {
-      name: fm.name,
-      description: fm.description,
-      version: fm.version,
-      compatibility: fm.compatibility,
-      tags: fm.tags,
-      category: fm.category,
-      metadata: fm.metadata,
-      publishedAt: new Date().toISOString(),
-    };
-
+    // Build manifest using pure function
+    const manifest: SkillManifest = buildManifest(fm, { sourceCommit });
     const manifestPath = join(MANIFESTS_DIR, `${fm.name}.json`);
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     console.log(`📄 ${fm.name}: Manifest built (v${fm.version})`);
 
     // Build skill record
-    skills.push({
-      name: fm.name,
-      description: fm.description,
-      category: fm.category,
-      tags: fm.tags,
-      compatibility: fm.compatibility,
-      latestVersion: fm.version,
-      latestScore: 0,
-      reviewStatus: 'pending',
-      lifecycleStatus: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    const skill = manifestToSkill(manifest);
+    skills.push(skill);
   }
 
   // Build index
-  const index: RegistryIndex = {
-    generatedAt: new Date().toISOString(),
-    skills,
-    total: skills.length,
-  };
-
+  const index = buildIndex(skills);
   const indexPath = join(ARTIFACTS_DIR, 'index.json');
   writeFileSync(indexPath, JSON.stringify(index, null, 2));
   console.log(`\n📊 Registry index built: ${skills.length} skill(s)`);

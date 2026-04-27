@@ -34,5 +34,8 @@ export {
   runSecurityScan,
 } from './security';
 export { validateReviewReport } from './review-validator';
+export { buildManifest, manifestToSkill, buildIndex, filterVisibleSkills } from './manifest';
+export type { FileMap } from './pack';
+export { sha256, validateTarPath, packSkill, unpackSkill } from './pack';
 
 export const REGISTRY_CORE_VERSION = '0.1.0';
