@@ -1,0 +1,100 @@
+name: Release
+
+# Run on push to main (after PR merge)
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'skills/**'
+      - 'packages/registry-core/**'
+      - 'scripts/**'
+      - 'apps/worker/**'
+      - 'db/**'
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate skills
+        run: npm run validate:skills
+
+      - name: Build registry metadata
+        run: npm run build:registry -- --source-commit "$GITHUB_SHA"
+
+      - name: Pack skills into tarballs
+        run: npm run pack:skills
+
+      - name: Publish to R2 (staging)
+        run: npm run publish:r2 -- --staging
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Import to D1 (staging)
+        run: npm run import:registry -- --remote
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  release-production:
+    runs-on: ubuntu-latest
+    environment: production
+    needs: release
+    # Only run production deployment on specific release tags or manual trigger
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Build registry metadata
+        run: npm run build:registry -- --source-commit "$GITHUB_SHA"
+
+      - name: Pack skills into tarballs
+        run: npm run pack:skills
+
+      - name: Publish to R2 (production)
+        run: npm run publish:r2 -- --production
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Import to D1 (production)
+        run: npm run import:registry -- --remote --production
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Worker
+        run: npm run deploy -w apps/worker
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
