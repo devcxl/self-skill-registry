@@ -3,15 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./src/main.ts",
+  "main": "./dist/main.js",
   "bin": {
-    "skillr": "./src/main.ts"
+    "skillr": "./dist/main.js"
   },
   "scripts": {
     "build": "tsc",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devcxl/self-skill-registry.git"
+  },
+  "files": [
+    "dist/",
+    "src/"
+  ],
   "dependencies": {
     "@types/node": "^25.6.0"
   },
