@@ -37,11 +37,23 @@ wrangler secret put GITHUB_CLIENT_SECRET --env production
 ```bash
 # Staging
 wrangler d1 create skill-registry-staging
+# ⚠️  复制输出的 database_id（UUID），更新 wrangler.toml 中的 "staging-db-id"
 
 # Production
 wrangler d1 create skill-registry-production
+# ⚠️  复制输出的 database_id（UUID），更新 wrangler.toml 中的 "production-db-id"
+```
 
-# 更新 wrangler.toml 中的 database_id 为实际值
+**重要**：`wrangler d1 create` 输出中有一行 `database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"`，必须把这个 UUID 复制到 `apps/worker/wrangler.toml` 对应环境的 `database_id` 字段。否则所有 `--remote` 操作都会失败。
+
+### 4. 验证 UUID 已配置
+
+```bash
+# 确认已获取到 database_id
+wrangler d1 list
+
+# 测试远程连接（确保 UUID 已更新）
+wrangler d1 execute skill-registry-staging --remote --env staging --command="SELECT 1"
 ```
 
 ### 4. 初始化 D1 schema
