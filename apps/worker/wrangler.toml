@@ -30,7 +30,7 @@ name = "skill-registry-staging"
 binding = "DB"
 database_name = "skill-registry-staging"
 # ⚠️  Replace with real UUID from: wrangler d1 list
-database_id = "staging-db-id"
+database_id = "97a6101a-fa0a-47c2-8869-1ded201765ae"
 
 [[env.staging.r2_buckets]]
 binding = "R2"
@@ -45,7 +45,7 @@ name = "skill-registry-production"
 binding = "DB"
 database_name = "skill-registry-production"
 # ⚠️  Replace with real UUID from: wrangler d1 list
-database_id = "production-db-id"
+database_id = "b4880814-58fb-4dcb-a568-37968635703b"
 
 [[env.production.r2_buckets]]
 binding = "R2"
