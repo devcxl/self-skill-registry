@@ -1,33 +1,42 @@
 # skill-registry Worker — Wrangler configuration
 # Local development and Cloudflare deployment
+#
+# IMPORTANT: Before running any --remote commands:
+#   1. Create D1 databases:   wrangler d1 create skill-registry-staging
+#   2. Get the UUID from output and replace "staging-db-id" below
+#   3. Repeat for production
 
 name = "skill-registry"
 main = "src/index.tsx"
 compatibility_date = "2025-04-27"
 
-# D1 Database
+# D1 Database (local dev only, uses database_name for lookup)
 [[d1_databases]]
 binding = "DB"
 database_name = "skill-registry"
 database_id = "skill-registry"
 
-# R2 Bucket (for tarball storage)
+# R2 Bucket
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "skill-registry-packages"
 
-# Environment-specific overrides
+# ── Staging ───────────────────────────────────────────────────────
+
 [env.staging]
 name = "skill-registry-staging"
 
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "skill-registry-staging"
+# ⚠️  Replace with real UUID from: wrangler d1 list
 database_id = "staging-db-id"
 
 [[env.staging.r2_buckets]]
 binding = "R2"
 bucket_name = "skill-registry-packages-staging"
+
+# ── Production ────────────────────────────────────────────────────
 
 [env.production]
 name = "skill-registry-production"
@@ -35,6 +44,7 @@ name = "skill-registry-production"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "skill-registry-production"
+# ⚠️  Replace with real UUID from: wrangler d1 list
 database_id = "production-db-id"
 
 [[env.production.r2_buckets]]

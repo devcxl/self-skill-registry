@@ -1,19 +1,13 @@
 /**
  * Import registry data into D1 from artifacts.
  * Usage:
- *   tsx scripts/import-registry.ts [--local] [--remote] [--dry-run]
+ *   tsx scripts/import-registry.ts [--local] [--remote] [--env staging|production] [--dry-run]
  *
  * Options:
  *   --local       Execute on local D1 (default)
  *   --remote      Execute on remote D1
+ *   --env <name>  Environment to target (staging | production). Required for --remote.
  *   --dry-run     Print SQL without executing
- *
- * Reads artifacts/packages/manifest.json and artifacts/manifests/*.json,
- * generates UPSERT SQL, and executes via wrangler d1 execute.
- *
- * Ensures (skill_name, version) immutability:
- *   - If a version already exists with the same SHA, skip
- *   - If a version exists with different SHA, it's an error (immutability violation)
  */
 
 import {
@@ -42,15 +36,33 @@ interface PackageMeta {
 
 function getArgs() {
   const args = process.argv.slice(2);
+  const envIdx = args.indexOf('--env');
+  const env = envIdx >= 0 ? args[envIdx + 1] : undefined;
+  if (env && !['staging', 'production'].includes(env)) {
+    console.error(`Invalid environment: ${env}. Use 'staging' or 'production'.`);
+    process.exit(2);
+  }
   return {
     remote: args.includes('--remote'),
     dryRun: args.includes('--dry-run'),
     local: !args.includes('--remote'),
+    env,
   };
 }
 
 function main(): void {
-  const { remote, dryRun } = getArgs();
+  const { remote, dryRun, env } = getArgs();
+
+  // --remote requires --env
+  if (remote && !env) {
+    console.error('Error: --remote requires --env staging|production');
+    process.exit(2);
+  }
+
+  // Determine the D1 database name to target
+  const dbName = env
+    ? `skill-registry-${env}`
+    : 'skill-registry';
 
   // Read packages manifest
   const manifestPath = join(PACKAGES_DIR, 'manifest.json');
@@ -121,9 +133,10 @@ WHERE skill_versions.sha256 = excluded.sha256;
   writeFileSync(IMPORT_SQL_PATH, fullSql);
 
   const flags = remote ? '--remote' : '--local';
-  const command = `npx wrangler d1 execute skill-registry ${flags} --file=../../artifacts/import.sql`;
+  const envFlag = env ? `--env ${env}` : '';
+  const command = `npx wrangler d1 execute ${dbName} ${flags} ${envFlag} --file=../../artifacts/import.sql`;
 
-  console.log(`Executing import (${remote ? 'remote' : 'local'})...`);
+  console.log(`Executing import (${remote ? `remote/${env}` : 'local'})...`);
   console.log(`  ${packages.length} package(s) to import\n`);
 
   try {
