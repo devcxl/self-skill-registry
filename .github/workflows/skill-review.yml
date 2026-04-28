@@ -95,16 +95,15 @@ jobs:
       - name: Run AI review (OpenCode)
         uses: anomalyco/opencode/github@latest
         with:
-          config: .opencode
-          command: |
+          model: minimax-cn-coding-plan/MiniMax-M2.7
+          prompt: |
             Review the skill that was changed in this PR.
             Follow .opencode/skills/skill-evaluator/SKILL.md instructions.
             Produce:
             1. skills/<skill-name>/EVAL.md
             2. artifacts/skill-review.json
-          timeout: 30
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
 
       - name: Verify EVAL.md exists
         run: |
