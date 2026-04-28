@@ -93,7 +93,7 @@ function main(): void {
     // Check if key already exists
     try {
       execSync(
-        `npx wrangler r2 object get "${objectPath}" --pipe`,
+        `npx wrangler r2 object get "${objectPath}" --remote ${envFlag} --pipe`,
         { cwd: WORKER_DIR, stdio: 'pipe', timeout: 30000 },
       );
       console.warn(`⚠️  ${pkg.skillName} v${pkg.version}: Already exists in R2, skipping`);
@@ -106,7 +106,7 @@ function main(): void {
     // Upload to R2
     try {
       execSync(
-        `npx wrangler r2 object put "${objectPath}" --file "${tarballPath}" ${envFlag}`,
+        `npx wrangler r2 object put "${objectPath}" --file "${tarballPath}" --remote ${envFlag}`,
         { cwd: WORKER_DIR, stdio: 'inherit', timeout: 120000 },
       );
       console.log(`✅ ${pkg.skillName} v${pkg.version}: Published → ${objectPath}`);
