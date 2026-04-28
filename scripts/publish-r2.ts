@@ -9,7 +9,7 @@
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 
 const ARTIFACTS_DIR = join(process.cwd(), 'artifacts');
@@ -34,8 +34,15 @@ function getArgs() {
   };
 }
 
+function getBucketName(env: string): string {
+  return env === 'production'
+    ? 'skill-registry-packages-production'
+    : 'skill-registry-packages-staging';
+}
+
 function main(): void {
   const { dryRun, env } = getArgs();
+  const bucketName = getBucketName(env);
 
   // Read packages manifest
   const manifestPath = join(PACKAGES_DIR, 'manifest.json');
@@ -50,22 +57,22 @@ function main(): void {
     process.exit(0);
   }
 
-  // Build Wrangler flags
   const envFlag = env !== 'staging' ? `--env ${env}` : '';
-  const dryRunFlag = dryRun ? '--dry-run' : '';
 
   if (dryRun) {
-    console.log(`=== DRY RUN === Environment: ${env}\n`);
+    console.log(`=== DRY RUN === Environment: ${env} | Bucket: ${bucketName}\n`);
   } else {
-    console.log(`Publishing to R2 (${env})...`);
+    console.log(`Publishing to R2 (${env}, bucket: ${bucketName})...`);
   }
 
   let successCount = 0;
   let failCount = 0;
 
   for (const pkg of packages) {
-    const tarballPath = join(PACKAGES_DIR, pkg.tarball);
+    const tarballPath = resolve(PACKAGES_DIR, pkg.tarball);
     const r2Key = `skills/${pkg.skillName}/${pkg.version}.tar.gz`;
+    // Wrangler expects: r2 object put {bucket}/{key} --file {path}
+    const objectPath = `${bucketName}/${r2Key}`;
 
     if (!existsSync(tarballPath)) {
       console.error(`❌ ${pkg.skillName}: Tarball not found: ${tarballPath}`);
@@ -75,44 +82,34 @@ function main(): void {
 
     if (dryRun) {
       console.log(`  📦 ${pkg.skillName} (v${pkg.version})`);
-      console.log(`     Source: ${tarballPath}`);
-      console.log(`     R2 Key: ${r2Key}`);
-      console.log(`     SHA256: ${pkg.sha256}`);
-      console.log(`     Size:   ${pkg.size}B`);
+      console.log(`     Source:    ${tarballPath}`);
+      console.log(`     ObjectPath: ${objectPath}`);
+      console.log(`     SHA256:    ${pkg.sha256}`);
+      console.log(`     Size:      ${pkg.size}B`);
       successCount++;
       continue;
     }
 
-    // First check if key already exists
+    // Check if key already exists
     try {
       execSync(
-        `npx wrangler r2 object get skill-registry-packages "${r2Key}" --pipe`,
-        {
-          cwd: WORKER_DIR,
-          stdio: 'pipe',
-          timeout: 30000,
-          env: { ...process.env },
-        },
+        `npx wrangler r2 object get "${objectPath}" --pipe`,
+        { cwd: WORKER_DIR, stdio: 'pipe', timeout: 30000 },
       );
-
-      console.warn(`⚠️  ${pkg.skillName} v${pkg.version}: Key already exists in R2, skipping`);
+      console.warn(`⚠️  ${pkg.skillName} v${pkg.version}: Already exists in R2, skipping`);
       failCount++;
       continue;
     } catch {
-      // Key doesn't exist, proceed with upload
+      // Key doesn't exist, proceed
     }
 
     // Upload to R2
     try {
-      const flags = [envFlag, dryRunFlag, `"${r2Key}"`, `--file "../../${tarballPath}"`]
-        .filter(Boolean)
-        .join(' ');
-      execSync(`npx wrangler r2 object put skill-registry-packages ${flags}`, {
-        cwd: WORKER_DIR,
-        stdio: 'inherit',
-        timeout: 120000,
-      });
-      console.log(`✅ ${pkg.skillName} v${pkg.version}: Published (${r2Key})`);
+      execSync(
+        `npx wrangler r2 object put "${objectPath}" --file "${tarballPath}" ${envFlag}`,
+        { cwd: WORKER_DIR, stdio: 'inherit', timeout: 120000 },
+      );
+      console.log(`✅ ${pkg.skillName} v${pkg.version}: Published → ${objectPath}`);
       successCount++;
     } catch (err) {
       console.error(`❌ ${pkg.skillName} v${pkg.version}: Upload failed`);
