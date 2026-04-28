@@ -113,6 +113,8 @@ jobs:
             2. artifacts/skill-review.json
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_GITHUB_TOKEN: true
 
       - name: Verify EVAL.md exists
         run: |
