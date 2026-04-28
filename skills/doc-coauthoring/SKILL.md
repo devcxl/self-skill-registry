@@ -1,6 +1,18 @@
 ---
 name: doc-coauthoring
 description: Guide users through co-authoring a substantial structured document such as a proposal, spec, RFC, PRD, or decision doc. Trigger only when the user needs a staged writing workflow from context gathering through drafting and reader validation; do not use for small edits, proofreading, translation, or generic Q&A.
+version: 1.0.0
+compatibility:
+  - opencode
+  - claude-code
+  - codex
+tags:
+  - doc
+category: utilities
+metadata:
+  language: en
+  license: MIT
+  author: devcxl
 ---
 
 # Doc Co-Authoring
