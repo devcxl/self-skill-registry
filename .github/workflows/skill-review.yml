@@ -20,6 +20,8 @@ jobs:
       changed-skills: ${{ steps.find-skills.outputs.skills }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history so git diff can reference base branch
 
       - uses: actions/setup-node@v4
         with:
@@ -34,27 +36,31 @@ jobs:
       - name: Find changed skills
         id: find-skills
         run: |
+          # Fetch base branch to ensure it's available for diff
+          git fetch origin ${{ github.base_ref }} --depth=1
+
           # Get list of changed directories under skills/
           SKILLS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
             grep '^skills/' | \
             cut -d'/' -f2 | \
             sort -u | \
-            tr '\n' ',' | \
-            sed 's/,$//')
+            grep -v '^$')
           echo "skills=$SKILLS" >> $GITHUB_OUTPUT
           echo "Found changed skills: $SKILLS"
 
       - name: Validate single skill per PR
         run: |
           SKILLS="${{ steps.find-skills.outputs.skills }}"
-          COUNT=$(echo "$SKILLS" | tr ',' '\n' | wc -l)
+          # Use grep to count non-empty lines (handles empty SKILLS correctly)
+          COUNT=$(echo "$SKILLS" | grep -c . || true)
           if [ "$COUNT" -gt 1 ]; then
             echo "❌ Multiple skills changed in this PR: $SKILLS"
             echo "Each PR must contain exactly ONE skill change."
             exit 1
           fi
-          if [ -z "$SKILLS" ]; then
+          if [ "$COUNT" -eq 0 ] || [ -z "$SKILLS" ]; then
             echo "No skill changes detected in skills/ directory."
+            echo "Make sure your PR adds files under skills/<name>/"
             exit 1
           fi
           echo "✅ Single skill PR: $SKILLS"
@@ -78,6 +84,9 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -131,10 +140,10 @@ jobs:
       - name: Check review status
         id: check-status
         run: |
-          STATUS=$(npx tsx -e "
-            const fs = require('fs');
+          STATUS=$(node -e "
+            const fs = require('node:fs');
             const data = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
-            console.log(data.reviewStatus);
+            process.stdout.write(data.reviewStatus);
           ")
           echo "Review status: $STATUS"
           echo "status=$STATUS" >> $GITHUB_OUTPUT
@@ -159,6 +168,11 @@ jobs:
           SKILL=$(echo "$SKILLS" | cut -d',' -f1)
           EVAL_PATH="skills/${SKILL}/EVAL.md"
 
+          if [ ! -f "$EVAL_PATH" ]; then
+            echo "⚠️  EVAL.md not found at $EVAL_PATH, skipping commit"
+            exit 0
+          fi
+
           git config user.name "skill-review[bot]"
           git config user.email "skill-review[bot]@users.noreply.github.com"
 
@@ -167,7 +181,7 @@ jobs:
             echo "No changes to commit in EVAL.md"
           else
             git commit -m "chore: add AI review evaluation for ${SKILL} [skip ci]"
-            git push
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
             echo "✅ EVAL.md committed to PR branch"
           fi
 
