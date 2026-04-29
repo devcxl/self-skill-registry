@@ -99,6 +99,11 @@ jobs:
       - name: Build workspace
         run: npm run build
 
+      - name: Configure git identity
+        run: |
+          git config user.name "skill-review[bot]"
+          git config user.email "skill-review[bot]@users.noreply.github.com"
+
       - name: Create artifacts directory
         run: mkdir -p artifacts
 
