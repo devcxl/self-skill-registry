@@ -170,27 +170,42 @@ jobs:
             # (hard fail only for rejected)
           fi
 
-      - name: Commit EVAL.md to PR
+      - name: Extract review score for later import
+        if: steps.check-status.outputs.status != 'rejected'
+        run: |
+          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
+          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
+            fs.writeFileSync('skills/${SKILL}/review-score.txt', String(data.totalScore));
+          "
+          echo "Score extracted for ${SKILL}"
+
+      - name: Commit EVAL.md and review score to PR
         run: |
           SKILLS="${{ needs.precheck.outputs.changed-skills }}"
           SKILL=$(echo "$SKILLS" | cut -d',' -f1)
           EVAL_PATH="skills/${SKILL}/EVAL.md"
+          SCORE_PATH="skills/${SKILL}/review-score.txt"
 
-          if [ ! -f "$EVAL_PATH" ]; then
-            echo "⚠️  EVAL.md not found at $EVAL_PATH, skipping commit"
+          if [ ! -f "$EVAL_PATH" ] && [ ! -f "$SCORE_PATH" ]; then
+            echo "⚠️  Neither EVAL.md nor review-score.txt found, skipping commit"
             exit 0
           fi
 
           git config user.name "devcxl"
           git config user.email "64475363+devcxl@users.noreply.github.com"
 
-          git add "$EVAL_PATH"
+          for F in "$EVAL_PATH" "$SCORE_PATH"; do
+            [ -f "$F" ] && git add "$F"
+          done
           if git diff --staged --quiet; then
-            echo "No changes to commit in EVAL.md"
+            echo "No changes to commit"
           else
             git commit -m "chore: add AI review evaluation for ${SKILL} [skip ci]"
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
-            echo "✅ EVAL.md committed to PR branch"
+            echo "✅ EVAL.md and review score committed to PR branch"
           fi
 
       - name: Post review status comment

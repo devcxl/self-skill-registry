@@ -94,19 +94,37 @@ function main(): void {
     const category = manifest.category || null;
     const r2Key = `skills/${pkg.skillName}/${pkg.version}.tar.gz`;
 
+    // Read review score if available
+    let reviewScore = 0;
+    const reviewScorePath = join(process.cwd(), 'skills', pkg.skillName, 'review-score.txt');
+    if (existsSync(reviewScorePath)) {
+      const scoreText = readFileSync(reviewScorePath, 'utf-8').trim();
+      reviewScore = parseInt(scoreText, 10) || 0;
+    }
+
     // UPSERT skills table
     sqlStatements.push(`
-INSERT INTO skills (name, description, category, tags, compatibility, latest_version, review_status, lifecycle_status)
-VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', 'approved', 'active')
+INSERT INTO skills (name, description, category, tags, compatibility, latest_version, latest_score, review_status, lifecycle_status)
+VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', ${reviewScore}, 'approved', 'active')
 ON CONFLICT(name) DO UPDATE SET
   description = excluded.description,
   category = COALESCE(excluded.category, skills.category),
   tags = COALESCE(excluded.tags, skills.tags),
   compatibility = excluded.compatibility,
   latest_version = excluded.latest_version,
+  latest_score = excluded.latest_score,
+  review_status = excluded.review_status,
   updated_at = datetime('now')
 WHERE excluded.latest_version > skills.latest_version;
 `.trim());
+
+    // Always update score if review data exists (even when version unchanged)
+    if (reviewScore > 0) {
+      sqlStatements.push(`
+UPDATE skills SET latest_score = ${reviewScore}, updated_at = datetime('now')
+WHERE name = '${escapeSql(pkg.skillName)}' AND latest_score < ${reviewScore};
+`.trim());
+    }
 
     // UPSERT skill_versions (immutability check)
     sqlStatements.push(`
