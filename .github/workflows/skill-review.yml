@@ -106,6 +106,7 @@ jobs:
         uses: anomalyco/opencode/github@latest
         with:
           model: minimax-cn-coding-plan/MiniMax-M2.7
+          use_github_token: true
           prompt: |
             Review the skill that was changed in this PR.
             Follow .opencode/skills/skill-evaluator/SKILL.md instructions.
@@ -114,8 +115,7 @@ jobs:
             2. artifacts/skill-review.json
         env:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USE_GITHUB_TOKEN: true
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Verify EVAL.md exists
         run: |
@@ -194,7 +194,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const status = process.env.REVIEW_STATUS || 'unknown';
+            const status = process.env.REVIEW_STATUS || 'workflow_error';
             const emoji = status === 'approved' ? '✅' : status === 'rejected' ? '❌' : '⚠️';
             
             let body = `${emoji} **AI Skill Review: ${status}**\n\n`;
@@ -210,7 +210,7 @@ jobs:
                 }
               }
             } catch {
-              body += 'Review report details unavailable.\n';
+              body += 'OpenCode review did not produce artifacts/skill-review.json. This usually means an upstream workflow error occurred before the report was generated (for example: permission checks, token mode mismatch, or action runtime failure).\n';
             }
 
             if (status === 'rejected') {
