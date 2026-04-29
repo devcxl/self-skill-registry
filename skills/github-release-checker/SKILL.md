@@ -1,80 +1,98 @@
 ---
 name: github-release-checker
-description: 当用户询问某个 GitHub 项目在两个版本之间的变更、进展、更新内容时使用。通过调用 GitHub API 获取指定版本范围内的所有 release 信息并汇总报告。触发场景包括：用户说"XX 项目从 v1.0 到 v2.0 有什么变化"、"XX 项目在 v1.2 和 v1.5 之间有哪些更新"、"XX 项目最近几个版本的变更汇总"等。
-version: 1.0.0
-compatibility:
-  - opencode
-  - claude-code
-  - codex
-tags:
-  - doc
-category: utilities
-metadata:
-  language: cn
-  license: MIT
-  author: devcxl
+description: >
+  Use when the user asks about changes between GitHub releases,
+  wants to know what changed from one version to another,
+  or needs a release changelog summary.
+  Works by calling GitHub API via bundled scripts to fetch and summarize releases between two tags.
+  Triggers on phrases like: 项目从 v1.0 到 v2.0 有什么变化,
+  版本之间有哪些更新, what's new in releases,
+  release changelog, list releases between tags.
 ---
 
 # GitHub Release Checker
 
+获取 GitHub 项目在指定版本区间内的所有 release，生成变更汇总报告。
+
+## 快速开始
+
+使用内置脚本获取版本变更：
+
+```bash
+python3 scripts/check_releases.py owner/repo <起始版本> <目标版本>
+```
+
+**常用命令：**
+
+```bash
+# 两个版本之间的变更
+python3 scripts/check_releases.py facebook/react v18.0.0 v18.2.0
+
+# 某一版本之后的所有 release（到最新）
+python3 scripts/check_releases.py kubernetes/kubernetes v1.28.0
+
+# 机器可读的 JSON 输出（用于管道/后续处理）
+python3 scripts/check_releases.py facebook/react v18.0.0 v18.2.0 --json
+
+# 包含 prerelease 版本
+python3 scripts/check_releases.py facebook/react v18.0.0 v18.3.0 --include-prereleases
+
+# 预览要发送的 API 请求（不实际调用）
+python3 scripts/check_releases.py facebook/react v18.0.0 v18.2.0 --dry-run
+```
+
 ## 工作流程
 
-1. **解析用户请求**：提取 GitHub 项目名（`owner/repo`）、起始版本、目标版本
-2. **获取版本列表**：调用 GitHub API 获取该项目的所有 releases，按时间排序
-3. **筛选版本范围**：过滤出起始版本到目标版本之间的所有 releases
-4. **汇总变更内容**：解析每个 release 的 `tag_name`、`published_at`、`body`
-5. **生成报告**：按版本时间顺序汇总输出
+1. **解析输入** — 提取 owner/repo、起始和目标版本号
+2. **获取版本列表** — 通过 GitHub API 分页拉取所有 release，按发布时间排序
+3. **筛选** — 过滤 draft/prerelease（可通过 flag 覆盖），定位版本区间
+4. **生成报告** — Markdown 格式（默认）或 JSON 格式（--json）
 
-## API 调用
+## 选项速查
 
-获取所有 releases（按发布时间倒序）：
-```bash
-curl "https://api.github.com/repos/{owner}/{repo}/releases?per_page=100&page=1"
-```
+| 选项 | 说明 |
+|------|------|
+| `--json` | 输出 JSON，用于管道和后续处理 |
+| `--verbose` | 输出详细进度到 stderr（不污染 stdout） |
+| `--dry-run` | 仅显示将要发送的请求，不实际调用 API |
+| `--max-pages N` | 最大分页数，默认 10 |
+| `--per-page N` | 每页数量（1-100），默认 100 |
+| `--include-prereleases` | 包含预发布版本 |
+| `--include-drafts` | 包含草稿 release |
+| `--github-token TOKEN` | GitHub PAT（或设置 `GITHUB_TOKEN` 环境变量） |
 
-获取指定 tag 的 release：
-```bash
-curl https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag_name}
-```
+## 输出格式
 
-## 版本范围匹配逻辑
+### Markdown（默认）
 
-- 用户可能说"从 v1.0 到 v2.0"、"从 1.0 到 2.0"、"从 xxx版本到xxx版本"
-- 需要识别版本号格式（v 前缀、有无等）
-- 如果只指定一个版本，则获取该版本之后的所有 releases
-- 如果版本不存在，给出提示并列出可用版本
+标准输出包含：版本区间、每个 release 的详细信息（发布日期、变更内容）、版本汇总表。
 
-## 输出报告格式
+### JSON（--json）
 
-```
-# {项目名} 版本变更报告
-
-## 版本范围：{起始版本} → {目标版本}
-## 涵盖版本：{版本数量} 个
-
----
-
-## {版本号} ({发布日期})
-
-### 新增功能
-- ...
-
-### Bug 修复
-- ...
-
-### 其他变更
-- ...
-
----
-
-## 版本趋势总结
-
-| 版本 | 日期 | 主要变化 |
-|------|------|----------|
+```json
+{
+  "repo": "owner/repo",
+  "range": {"start": "v1.0.0", "end": "v2.0.0"},
+  "count": 3,
+  "releases": [
+    {
+      "tag_name": "v1.1.0",
+      "name": "Release Title",
+      "published_at": "2024-01-15T10:00:00Z",
+      "prerelease": false,
+      "draft": false,
+      "html_url": "https://...",
+      "body": "...",
+      "summary": "前 200 字符摘要..."
+    }
+  ]
+}
 ```
 
 ## 注意事项
 
-- GitHub API 速率限制：未认证请求每小时 60 次
-- 某些项目可能使用 prerelease 或 draft release，按需过滤
-- 如果版本范围跨越太久远，可能需要分页获取（增加 page 参数）
+- 未认证请求限速 60 次/小时。推荐设置 `GITHUB_TOKEN` 环境变量提高到 5000 次/小时
+- 版本号支持 v 前缀（如 `v1.2.3`）和无前缀（`1.2.3`）两种格式
+- 默认过滤 draft 和 prerelease，使用 `--include-prereleases` / `--include-drafts` 覆盖
+- 每页最多 100 条，跨越大范围版本时自动分页
+- 请求均为只读 GET，可安全重复执行
