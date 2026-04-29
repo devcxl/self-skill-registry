@@ -1,13 +1,20 @@
 ---
 name: github-release-checker
-description: >
-  Use when the user asks about changes between GitHub releases,
-  wants to know what changed from one version to another,
-  or needs a release changelog summary.
-  Works by calling GitHub API via bundled scripts to fetch and summarize releases between two tags.
-  Triggers on phrases like: 项目从 v1.0 到 v2.0 有什么变化,
-  版本之间有哪些更新, what's new in releases,
-  release changelog, list releases between tags.
+description: "Use when the user asks about changes between GitHub releases, wants to know what changed from one version to another, or needs a release changelog summary. Works by calling GitHub API via bundled scripts to fetch and summarize releases between two tags. Triggers on: 项目从 v1.0 到 v2.0 有什么变化, 版本之间有哪些更新, what's new in releases, release changelog, list releases between tags."
+version: 2.0.0
+compatibility:
+  - opencode
+  - claude-code
+  - codex
+tags:
+  - github
+  - release
+  - changelog
+category: utilities
+metadata:
+  language: cn
+  license: MIT
+  author: devcxl
 ---
 
 # GitHub Release Checker
