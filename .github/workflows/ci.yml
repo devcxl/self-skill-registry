@@ -1,4 +1,4 @@
-name: Validate
+name: CI
 
 # Run on PRs (excluding docs-only changes)
 on:

@@ -1,6 +1,11 @@
-name: Release
+name: Release Skills
 
-# Run on push to main (after PR merge)
+# Push to main → publish skills to R2/D1 staging
+# Tag v* → publish to production
+#
+# ⚠️  Worker deploy is handled by release-worker.yml.
+# ⚠️  CLI publish is handled by release-cli.yml.
+
 on:
   push:
     branches:
@@ -9,7 +14,6 @@ on:
       - 'skills/**'
       - 'packages/registry-core/**'
       - 'scripts/**'
-      - 'apps/worker/**'
       - 'db/**'
 
 permissions:
@@ -17,7 +21,7 @@ permissions:
   deployments: write
 
 jobs:
-  release:
+  staging:
     runs-on: ubuntu-latest
     environment: staging
     steps:
@@ -55,11 +59,10 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-  release-production:
+  production:
     runs-on: ubuntu-latest
     environment: production
-    needs: release
-    # Only run production deployment on specific release tags or manual trigger
+    needs: staging
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
@@ -89,12 +92,6 @@ jobs:
 
       - name: Import to D1 (production)
         run: npm run import:registry -- --remote --env production
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Deploy Worker
-        run: npm run deploy -w apps/worker
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

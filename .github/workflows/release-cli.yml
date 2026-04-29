@@ -1,4 +1,4 @@
-name: Publish CLI
+name: Release CLI
 
 # Publish @devcxl/skillr to GitHub Packages
 on:
