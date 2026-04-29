@@ -1,6 +1,18 @@
 ---
 name: goal-decomposition
 description: Use when facing complex, vague, or large-scope tasks that need to be broken down into clear, actionable steps before execution. Triggers include multi-step features, unclear requirements, or goals that cannot be completed in one hour.
+version: 1.0.0
+compatibility:
+  - opencode
+  - claude-code
+  - codex
+tags:
+  - doc
+category: utilities
+metadata:
+  language: cn
+  license: MIT
+  author: devcxl
 ---
 
 # Goal Decomposition
