@@ -97,7 +97,6 @@ function main(): void {
         { cwd: WORKER_DIR, stdio: 'pipe', timeout: 30000 },
       );
       console.warn(`⚠️  ${pkg.skillName} v${pkg.version}: Already exists in R2, skipping`);
-      failCount++;
       continue;
     } catch {
       // Key doesn't exist, proceed
