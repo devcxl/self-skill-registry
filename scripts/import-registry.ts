@@ -97,7 +97,7 @@ function main(): void {
     // UPSERT skills table
     sqlStatements.push(`
 INSERT INTO skills (name, description, category, tags, compatibility, latest_version, review_status, lifecycle_status)
-VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', 'pending', 'active')
+VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', 'approved', 'active')
 ON CONFLICT(name) DO UPDATE SET
   description = excluded.description,
   category = COALESCE(excluded.category, skills.category),
