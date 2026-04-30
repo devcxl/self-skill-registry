@@ -70,21 +70,15 @@
 - [ ] **6.4** Admin 可切换用户管理员状态
 - [ ] **6.5** 批准后的 skill 在普通用户 UI 可见
 
-### 7. CLI
+### 7. 外部安装入口（`npx skill`）
 
-- [ ] **7.1** `skillr config set registry <url>` 配置 registry
-- [ ] **7.2** `skillr config set token <token>` 配置 token
-- [ ] **7.3** `skillr config show` 显示配置
-- [ ] **7.4** `skillr search <query>` 搜索 skills
-- [ ] **7.5** `skillr info <name>` 查看详情
-- [ ] **7.6** `skillr install <name>` 安装到默认目标
-- [ ] **7.7** `skillr install <name> --target opencode` 安装到指定平台
-- [ ] **7.8** `skillr install <name> --force` 强制覆盖安装
-- [ ] **7.9** `skillr list` 列出已安装
-- [ ] **7.10** `skillr update` 更新已安装 skills
-- [ ] **7.11** `skillr remove <name>` 删除 skill
-- [ ] **7.12** 安装后 SKILL.md 存在于目标路径
-- [ ] **7.13** SHA-256 校验正确（hash 不匹配时报错）
+- [ ] **7.1** 使用 `npx skill` 配置 registry 与 token
+- [ ] **7.2** 使用 `npx skill` 搜索 skills 并查看详情
+- [ ] **7.3** 使用 `npx skill` 安装到默认目标
+- [ ] **7.4** 使用 `npx skill` 安装到指定平台
+- [ ] **7.5** 使用 `npx skill` 列出、更新、删除已安装 skill
+- [ ] **7.6** 安装后 `SKILL.md` 存在于目标路径
+- [ ] **7.7** SHA-256 校验正确（hash 不匹配时报错）
 
 ### 8. D1 Schema 完整性
 

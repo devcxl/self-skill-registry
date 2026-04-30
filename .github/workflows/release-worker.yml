@@ -4,7 +4,6 @@ name: Release Worker
 # Workflow dispatch → deploy staging or production
 #
 # ⚠️  Skills release is handled by release-skills.yml.
-# ⚠️  CLI publish is handled by release-cli.yml.
 
 on:
   push:

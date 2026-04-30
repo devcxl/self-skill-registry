@@ -24,7 +24,7 @@
 
 - GitHub 托管 skill 源码、PR、审核证据
 - Cloudflare 承载 Registry API、Web UI、对象分发、元数据存储
-- skillr CLI 负责多平台安装
+- 外部 `npx skill` 负责多平台安装
 - 支持 OpenCode、Claude Code、Codex 三类目标安装路径
 - 所有 skill 必须经过 AI 审核流程；未通过不得展示给普通用户
 
@@ -58,7 +58,7 @@
 | 审核证据权威源 | `EVAL.md` 是人类可读权威原文；JSON 为数据库入库载体 |
 | 鉴权 | OIDC 登录（GitHub / 飞书 / 钉钉）+ 用户独立 token |
 | token 策略 | 首次登录自动生成，默认永不过期，可手动撤销 / 重建 |
-| CLI | `@devcxl/skillr`，通过 GitHub Packages 分发 |
+| 安装入口 | 外部 `npx skill`，本仓库不维护内置 CLI |
 | Web UI | Hono JSX + Tailwind CLI |
 | 数据同步 | CI 通过 `wrangler d1 execute` / `wrangler r2 object put` 直写 Cloudflare 资源 |
 | 环境 | staging / production 两套 |
@@ -73,7 +73,6 @@ GitHub Repo
   ├── skills/                         # 业务 skill 源码
   ├── .opencode/skills/skill-evaluator/ # 审核 skill
   ├── apps/worker/                    # Hono Worker + Web UI
-  ├── apps/cli/                       # skillr CLI
   ├── packages/registry-core/         # 共享纯逻辑
   ├── scripts/                        # 构建 / 校验 / 导入脚本
   ├── db/schema.sql                   # D1 初始化 SQL
@@ -431,7 +430,7 @@ AI 审核负责语义性问题：
 - token 只显示一次，数据库仅保存 hash
 - token 默认永不过期
 - 用户可在 `/settings` 查看、复制、删除、重建 token
-- skillr 通过 registry 地址 + token 工作
+- 外部安装入口通过 registry 地址 + token 工作
 
 ## 11.3 权限模型
 
@@ -505,50 +504,15 @@ POST /admin/users/:id/toggle-admin
 
 ---
 
-## 14. skillr CLI 设计
+## 14. 外部安装入口（`npx skill`）约定
 
-## 14.1 分发与运行时
+## 14.1 入口与边界
 
-- 包名：`@devcxl/skillr`
-- 发布位置：GitHub Packages
-- Node 版本：`>=18`
-- 命令解析：轻依赖或原生 `process.argv`
+- 统一安装入口：`npx skill`
+- 本仓库不维护旧内置 CLI 或旧安装包
+- 本仓库只提供 Registry API、下载链路、用户 token 与目标路径约定
 
-## 14.2 配置层级
-
-优先级：
-
-```text
-环境变量 > 项目配置 > 全局配置
-```
-
-位置：
-
-- `~/.skillr/config.json`
-- `./.skillr/config.json`
-- `SKILLR_REGISTRY_URL`
-- `SKILLR_TOKEN`
-
-## 14.3 lock 文件
-
-- 全局：`~/.skillr/lock.json`
-- 项目：`./.skillr/lock.json`
-- 项目级优先于全局级
-
-## 14.4 支持命令
-
-```text
-skillr search
-skillr info
-skillr install
-skillr update
-skillr remove
-skillr list
-skillr config set
-skillr config show
-```
-
-## 14.5 安装目标路径
+## 14.2 安装目标路径
 
 | target | global | project |
 |---|---|---|
@@ -556,13 +520,11 @@ skillr config show
 | claude-code | `~/.claude/skills/<name>` | `.claude/skills/<name>` |
 | codex | `~/.agents/skills/<name>` | `.agents/skills/<name>` |
 
-## 14.6 冲突处理
+## 14.3 仓库职责
 
-- 同版本已安装：跳过
-- 旧版本已安装：备份后升级
-- 已安装更高版本：默认拒绝，`--force` 可覆盖
-- 来源 registry 不一致：默认拒绝，`--force` 可覆盖
-- 本地手改：默认拒绝，`--force` 可覆盖
+- 保证 `GET /v1/index.json`、skill 详情、版本列表、下载接口稳定可用
+- 保证用户 token 可用于外部安装入口鉴权
+- 不在本仓库内维护安装器实现细节
 
 ---
 
@@ -578,7 +540,6 @@ skillr config show
 
 - Turborepo 基础结构
 - `apps/worker`
-- `apps/cli`
 - `packages/registry-core`
 - `db/schema.sql`
 - `wrangler` staging / production 配置
@@ -588,7 +549,7 @@ skillr config show
 
 - 本地可启动 Worker
 - D1 schema 可手动初始化
-- CLI 可本地执行空命令入口
+- Worker、registry-core、脚本链路可本地运行
 
 ## Phase 2：Skill 规范、校验、打包、发布基础能力
 
@@ -660,22 +621,20 @@ skillr config show
 - 用户首次登录自动拿到 token
 - admin 可处理 `needs_manual_review`
 
-## Phase 6：skillr CLI 正式可用
+## Phase 6：外部安装入口接入
 
-目标：完成多平台安装与团队内部分发。
+目标：明确 `npx skill` 与 Registry API、下载链路、token、目标路径之间的对接约定。
 
 交付：
 
-- search / info / install / update / remove / list / config
-- 多目标安装路径
-- 双 lock 文件
-- 冲突检测与 `--force`
-- GitHub Packages 发布
+- 统一安装入口为 `npx skill`
+- API / 下载 / token 约定稳定
+- OpenCode / Claude Code / Codex 目标路径约定明确
 
 完成标准：
 
 - 用户能用 token 连接私有 Registry
-- 能正确安装到 OpenCode / Claude Code / Codex 路径
+- 能通过 `npx skill` 安装到 OpenCode / Claude Code / Codex 路径
 
 ## Phase 7：运维增强与上线收口
 
@@ -717,8 +676,8 @@ skillr config show
 
 - 任一 skill 能通过 PR 审核、产出 `EVAL.md` 和 JSON、合并后发布到 R2 + D1
 - Web UI 能检索、浏览、查看审核结果与安装命令
-- skillr 能用用户 token 连接私有 Registry
-- skillr 能安装到 OpenCode、Claude Code、Codex 目标路径
+- `npx skill` 能用用户 token 连接私有 Registry
+- `npx skill` 能安装到 OpenCode、Claude Code、Codex 目标路径
 - 普通用户看不到未审核 / 被拒绝的 skill
 - admin 能处理人工审核、用户授权、状态变更
 - staging / production 两套环境可独立部署
@@ -732,9 +691,9 @@ skillr config show
 | 审核输出不稳定，JSON 与 EVAL 不一致 | Web UI 数据错误，证据链断裂 | CI 中同时校验 `EVAL.md` 与 JSON 必存在，并校验 JSON schema；增加一致性测试 |
 | 版本号未正确递增 | 同版本内容漂移 | 为 `version` 与内容 hash 建立校验测试 |
 | scripts 含外部依赖或网络访问未被识别 | 风险 skill 被误放行 | 增加规则测试样例，验证 `needs_manual_review` 路径 |
-| CLI 安装覆盖本地修改 | 用户数据丢失 | 为本地修改检测、备份、`--force` 行为写测试 |
+| 外部安装入口覆盖本地修改 | 用户数据丢失 | 为本地修改检测、备份、覆盖行为写测试 |
 | D1 状态字段语义混乱 | UI / API 逻辑错误 | 单独测试 `review_status` 与 `lifecycle_status` 的过滤逻辑 |
-| OIDC 与 token 流程出错 | 用户无法使用 skillr | 联调登录、token 生成、token 校验、撤销流程 |
+| OIDC 与 token 流程出错 | 用户无法使用 `npx skill` | 联调登录、token 生成、token 校验、撤销流程 |
 | 单 PR 单 skill 规则被绕过 | 审核粒度失控 | 在 CI 加变更目录检测测试 |
 
 ---
@@ -746,7 +705,7 @@ skillr config show
 - GitHub 是源码与审核中心
 - Cloudflare 是分发与展示中心
 - `skill-evaluator` 是审核门禁核心
-- `skillr` 是安装入口
+- `npx skill` 是安装入口
 - `approved` 是唯一对普通用户可见的发布状态
 
 后续实现工作应严格按本文档分阶段推进，不再回退到纯静态路线，也不再引入未确认的新抽象。

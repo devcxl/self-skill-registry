@@ -4,7 +4,6 @@ name: Release Skills
 # Tag v* → publish to production
 #
 # ⚠️  Worker deploy is handled by release-worker.yml.
-# ⚠️  CLI publish is handled by release-cli.yml.
 
 on:
   push:

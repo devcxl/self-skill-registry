@@ -23,7 +23,7 @@
 | M3 | AI 审核门禁 | 一个 PR 一个 skill，OpenCode 调用 evaluator，产出 EVAL + JSON，rejected 硬阻断 |
 | M4 | Worker API + Web UI | approved skill 可搜索、查看、下载，Web UI 可浏览审核结果 |
 | M5 | OIDC + Admin | 用户登录、token、权限、人工审核可用 |
-| M6 | skillr CLI | 能配置 registry/token，并安装到 OpenCode / Claude Code / Codex |
+| M6 | 外部安装入口 | 通过 `npx skill` 完成安装，并对接 Registry token / 下载链路 |
 | M7 | 内部上线 | staging / production、文档、PR 模板、端到端验收完成 |
 
 ---
@@ -38,21 +38,20 @@ T01
  │       │                   └─ T15
  │       └─ T16
  ├─ T04 ─ T05 ─ T21 ─ T22 ─ T23 ─ T24
- └─ T06 ─ T30
+ └─ T06
 
 T08/T09/T10 + T18 + T19 -> T20
 T13/T14/T15/T16 -> T17
 T21/T22/T23 + T25/T26 -> Web UI MVP
 T27/T28 -> T29
-T22/T23 + T28 + T30 -> T31 -> T32
-T20 + T24 + T29 + T32 -> T38 端到端验收
+T22 + T24 + T28 + T30 -> T38 端到端验收
 ```
 
 可并行：
 
 - `T02 / T04 / T06` 可在 `T01` 后并行，`T05` 在 `T04` 后开始。
 - `T07-T12` 与 `T21-T24` 可分支并行，但 Worker API 依赖 D1 schema。
-- `T30-T32` 可与 Web UI 并行，但需要 API contract 稳定。
+- `T30` 可与 Web UI 并行，但需要 API contract 稳定。
 - OIDC / Admin 可在公开读 API 后并行推进。
 
 ---
@@ -65,7 +64,7 @@ T20 + T24 + T29 + T32 -> T38 端到端验收
 
 - [ ] 创建根 `package.json`、`turbo.json`、`tsconfig.base.json`
 - [ ] 配置 npm workspaces：`apps/*`、`packages/*`
-- [ ] 创建目录：`apps/worker`、`apps/cli`、`packages/registry-core`、`scripts`、`db`、`skills`
+- [ ] 创建目录：`apps/worker`、`packages/registry-core`、`scripts`、`db`、`skills`
 - [ ] 统一 Node 版本要求与基础 npm scripts
 
 依赖：无  
@@ -159,23 +158,17 @@ curl http://localhost:8787/health
 
 ---
 
-#### T06 — 初始化 skillr CLI 包
+#### T06 — 明确外部 `npx skill` 接入边界
 
-- [ ] 创建 `apps/cli`
-- [ ] 包名设为 `@devcxl/skillr`
-- [ ] Node engine 设为 `>=18`
-- [ ] 创建 CLI 入口与基础 help 输出
+- [ ] 明确本仓库不再维护内置 CLI
+- [ ] 明确统一安装入口为外部 `npx skill`
+- [ ] 明确本仓库只负责 Registry API、下载链路、token 能力
 
 依赖：T01  
-交付物：可本地运行的 CLI 空壳  
-验证：
+交付物：安装入口边界说明  
+验证：文档中不再要求实现旧内置 CLI 或发布旧安装包。
 
-```bash
-npm run build -w apps/cli
-node apps/cli/dist/main.js --help
-```
-
-退出标准：CLI 能执行并显示命令帮助。
+退出标准：后续任务不再依赖内置 CLI。
 
 ---
 
@@ -542,7 +535,7 @@ npm run dev:worker
 交付物：Web UI MVP  
 验证：浏览器手动验证列表、详情、审核详情。
 
-退出标准：内部用户无需 CLI 也能浏览 Registry。
+退出标准：内部用户无需安装工具也能浏览 Registry。
 
 ---
 
@@ -574,10 +567,10 @@ npm run dev:worker
 - [ ] `/v1/*` Bearer token 验证中间件
 
 依赖：T27  
-交付物：skillr 可用的用户 token 体系  
+交付物：外部安装入口可用的用户 token 体系  
 验证：用 token curl `/v1/index.json` 成功，无 token 失败。
 
-退出标准：CLI 可通过 token 调用 API。
+退出标准：外部安装入口可通过 token 调用 API。
 
 ---
 
@@ -599,73 +592,22 @@ npm run dev:worker
 
 ---
 
-### M6：skillr CLI
+### M6：外部安装入口（`npx skill`）
 
-#### T30 — 实现 CLI 配置与 lock 文件
+说明：本仓库不再维护内置 CLI。安装、更新、删除统一由外部 `npx skill` 完成；本仓库仅保证 API、下载、token 与目标路径约定稳定。
 
-- [ ] `skillr config set registry`
-- [ ] `skillr config set token`
-- [ ] `skillr config show`
-- [ ] 支持 `~/.skillr/config.json`、`./.skillr/config.json`
-- [ ] 支持 `SKILLR_REGISTRY_URL`、`SKILLR_TOKEN`
-- [ ] 实现全局 / 项目 lock 文件
+#### T30 — 明确 `npx skill` 接入约定
 
-依赖：T06  
-交付物：CLI 配置层  
-验证：临时 HOME 下读写 config / lock。
+- [ ] 说明统一安装入口为 `npx skill`
+- [ ] 说明依赖的 Registry API、下载 API、token 约定
+- [ ] 说明 OpenCode / Claude Code / Codex 的目标路径约定
+- [ ] 说明本仓库不再发布旧安装包或维护旧 CLI workspace
 
-退出标准：配置优先级符合 Plan。
+依赖：T22、T24、T28  
+交付物：外部安装入口接入说明  
+验证：文档可说明如何通过 token + Registry API 完成安装链路对接。
 
----
-
-#### T31 — 实现 CLI Registry Client
-
-- [ ] 带 Authorization header 请求 API
-- [ ] `search`
-- [ ] `info`
-- [ ] 错误响应解析
-- [ ] sha256 metadata 读取
-
-依赖：T22、T23、T28、T30  
-交付物：CLI 查询能力  
-验证：用 staging API 执行 search / info。
-
-退出标准：CLI 能稳定读取私有 Registry。
-
----
-
-#### T32 — 实现 CLI 安装、更新、删除、列表
-
-- [ ] `install <name>[@version]`
-- [ ] `--target opencode|claude-code|codex|all`
-- [ ] `--project`
-- [ ] `update`
-- [ ] `remove`
-- [ ] `list`
-- [ ] 冲突检测与 `--force`
-- [ ] 下载后 sha256 校验
-- [ ] 解压路径穿越校验
-
-依赖：T12、T24、T30、T31  
-交付物：skillr 核心安装能力  
-验证：临时目录模拟三种目标路径，安装 / 更新 / 删除均通过。
-
-退出标准：能安装到 OpenCode / Claude Code / Codex 路径。
-
----
-
-#### T33 — 配置 GitHub Packages 发布
-
-- [ ] 配置 `@devcxl/skillr` 发布 workflow
-- [ ] 配置 `@devcxl/registry-core` 包 metadata
-- [ ] 增加内部安装说明
-- [ ] 不发布到公共 npmjs.com
-
-依赖：T32  
-交付物：内部 npm 分发能力  
-验证：从 GitHub Packages 安装 `@devcxl/skillr`。
-
-退出标准：团队成员可按 README 安装 CLI。
+退出标准：安装入口职责与本仓库边界清晰。
 
 ---
 
@@ -675,10 +617,10 @@ npm run dev:worker
 
 - [ ] registry-core 覆盖 validator / security / manifest / pack / version
 - [ ] worker 覆盖 API、状态过滤、错误响应
-- [ ] cli 覆盖 config、lock、安装冲突、sha256、路径穿越
+- [ ] API、下载、token、安装约定覆盖核心路径
 - [ ] CI 强制运行测试
 
-依赖：T16、T24、T32  
+依赖：T16、T24、T28  
 交付物：上线前测试基线  
 验证：
 
@@ -744,10 +686,10 @@ npm test
 - [ ] PR 合并后 release 写入 R2 + D1
 - [ ] Web UI 可搜索、查看、下载
 - [ ] 用户通过 OIDC 登录并拿到 token
-- [ ] skillr 用 token 安装到三种目标路径
+- [ ] 通过 `npx skill` 安装到三种目标路径
 - [ ] admin 能处理一个 `needs_manual_review` skill
 
-依赖：T29、T32、T35、T37  
+依赖：T29、T30、T35、T37  
 交付物：一期内部版验收记录  
 验证：完整走通 staging；production 按发布窗口执行。
 
@@ -783,13 +725,12 @@ npm test
 - [ ] T24 下载接口
 - [ ] T26 Web UI 普通页面
 - [ ] T28 token 管理
-- [ ] T32 CLI 安装能力
+- [ ] T30 npx skill 接入约定
 
 ### P2：内部稳定与长期运维
 
 - [ ] T27 完整 OIDC provider
 - [ ] T29 Admin UI
-- [ ] T33 GitHub Packages 发布
 - [ ] T34 测试覆盖
 - [ ] T35 双环境部署
 - [ ] T37 400+ skill 导入 runbook
