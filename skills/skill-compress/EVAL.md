@@ -1,3 +1,60 @@
+---
+skillName: skill-compress
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 85
+categoryScores:
+  functional-suitability: 11
+  reliability: 11
+  performance: 8
+  usability-ai: 15
+  usability-human: 8
+  security: 12
+  maintainability: 12
+  agent-specific: 15
+findings:
+  - id: F001
+    criterion: description-length
+    category: agent-specific
+    score: 2
+    description: >-
+      Description is only 4 words (当用户要求精简 skill...). Too short for reliable
+      triggering. Risks false positives on generic 'compress' or 'skill'
+      mentions
+    priority: P0
+    suggestion: >-
+      Expand description with trigger context: 'Use when.../不要用于...' structure.
+      Add explicit do/don't boundaries
+  - id: F002
+    criterion: trigger-precision
+    category: agent-specific
+    score: 2
+    description: >-
+      Description lacks explicit 'Use when...' trigger phrase pattern. Generic
+      'skill' keyword could cause unintended activation
+    priority: P1
+    suggestion: >-
+      Add more specific action words and trigger contexts like '当用户要求精简
+      skill、减少体积时触发；不要用于业务代码'
+  - id: F003
+    criterion: completeness-edge-cases
+    category: functional-suitability
+    score: 3
+    description: >-
+      Skill covers core compression workflow well but missing guidance for
+      multi-file skills, skills with scripts/, or skills with dependencies
+    priority: P2
+    suggestion: Consider adding a note about handling skills with more complex structures
+summary: >-
+  Skill is publishable with score 85/100. Main issue is description too short
+  (P0). The skill is well-structured for its purpose as a skill-compression
+  utility with clear steps, constraints, and properly linked references. No
+  credentials, no external deps, no scripts.
+reviewedAt: '2026-04-30T10:30:00Z'
+reviewer: AI-Evaluator
+sourceCommit: skill/skill-compress
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # skill-compress Evaluation
