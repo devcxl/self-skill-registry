@@ -1,11 +1,16 @@
 name: Release CLI
 
-# Publish @devcxl/skillr to GitHub Packages
+# Tag v* 或手动指定版本后，发布 @devcxl/skillr 到 GitHub Packages
 on:
   push:
     tags:
-      - 'v*'            # e.g. v0.1.0
-  workflow_dispatch:     # Manual trigger
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '要发布的 CLI 版本（例如 0.1.1）'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,7 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
+          scope: '@devcxl'
 
       - name: Install dependencies
         run: npm ci
@@ -28,11 +35,29 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Set version from tag
+      - name: Resolve release version
+        id: version
+        shell: bash
         run: |
-          TAG=${GITHUB_REF#refs/tags/v}
-          echo "Publishing version: $TAG"
-          npm version $TAG --no-git-tag-version -w apps/cli
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "无效版本号: $VERSION" >&2
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: $VERSION"
+
+      - name: Set package version
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version -w apps/cli
+
+      - name: Verify publish package
+        run: npm publish --dry-run -w apps/cli --registry https://npm.pkg.github.com
 
       - name: Publish to GitHub Packages
         run: npm publish -w apps/cli --registry https://npm.pkg.github.com
