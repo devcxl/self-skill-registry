@@ -1,3 +1,5 @@
+<!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
+
 # [SKILL_NAME] Evaluation
 
 **Date:** YYYY-MM-DD

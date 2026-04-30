@@ -1,3 +1,29 @@
+---
+skillName: goal-decomposition
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 65
+categoryScores:
+  functional-suitability: 10
+  reliability: 4
+  performance: 4
+  usability-ai: 15
+  usability-human: 7
+  security: 4
+  maintainability: 8
+  agent-specific: 14
+findings: []
+summary: >-
+  The skill is well-structured documentation providing clear, actionable
+  guidance for breaking down complex goals. The 65/100 baseline mainly
+  reflects documentation-only criteria that score 0 in executable
+  dimensions, while core methodology, clarity, and visual feedback remain
+  strong.
+reviewedAt: 2026-04-29T00:00:00Z
+reviewer: AI-Evaluator
+---
+
 # goal-decomposition Evaluation
 
 **Date:** 2026-04-29

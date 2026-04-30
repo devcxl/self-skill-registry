@@ -84,6 +84,7 @@ git push -u origin "$BRANCH"
 - CI 自动运行 validate workflow
 - skill-review workflow 调用 OpenCode 执行审核
 - 审核产出 `EVAL.md` 和 `artifacts/skill-review.json`
+- workflow 会将结构化结果同步进 `EVAL.md` 的 YAML front matter
 - 审核结果自动评论在 PR 上
 
 ### 6. 处理审核结果

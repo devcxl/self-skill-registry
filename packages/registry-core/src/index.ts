@@ -34,6 +34,7 @@ export {
   runSecurityScan,
 } from './security';
 export { validateReviewReport } from './review-validator';
+export { parsePersistedReviewFrontmatter } from './review-frontmatter';
 export { buildManifest, manifestToSkill, buildIndex, filterVisibleSkills } from './manifest';
 export type { FileMap } from './pack';
 export { sha256, validateTarPath } from './pack';

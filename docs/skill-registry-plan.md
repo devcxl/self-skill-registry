@@ -298,16 +298,17 @@ AI 审核负责语义性问题：
 
 ## 8.4 审核输出
 
-同一次审核必须同时输出两份结果：
+同一次审核必须同时得到两类结果：
 
-1. `EVAL.md`
+1. `skills/<name>/EVAL.md`
 2. `artifacts/skill-review.json`
 
 约束：
 
-- `EVAL.md`：提交回 PR 分支，作为审核证据
-- `skill-review.json`：结构化写入 D1，供 Web UI 消费
-- 两者必须由同一次 AI 审核产出，内容保持一致
+- `EVAL.md`：提交回 PR 分支，作为人类可读审核证据；workflow 会把结构化结果同步进它的 YAML front matter
+- `artifacts/skill-review.json`：AI 审核直接产出的结构化结果
+- release/import 只解析 `EVAL.md` 的 front matter，不解析正文
+- 两者必须来自同一次审核，内容保持一致
 
 ## 8.5 审核 skill 的位置
 
@@ -366,9 +367,10 @@ AI 审核负责语义性问题：
 4. 调用 `anomalyco/opencode/github@latest`
 5. 产出 `EVAL.md` 与 `skill-review.json`
 6. 校验 JSON schema
-7. 评论审核摘要
-8. 提交 `EVAL.md` 回 PR 分支（`[skip ci]`）
-9. 若 `rejected` 则 job fail
+7. 将 `skill-review.json` 同步进 `EVAL.md` 的 YAML front matter
+8. 评论审核摘要
+9. 提交 `EVAL.md` 回 PR 分支（`[skip ci]`）
+10. 若 `rejected` 则 job fail
 
 ## 9.3 release.yml
 

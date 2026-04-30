@@ -406,6 +406,7 @@ npm test -- validate-review-report
 
 - [ ] 更新 `.opencode/skills/skill-evaluator/SKILL.md`
 - [ ] 明确必须同时输出 `skills/<name>/EVAL.md` 与 `artifacts/skill-review.json`
+- [ ] 明确 workflow 会把结构化结果同步进 `EVAL.md` 的 YAML front matter
 - [ ] 明确只审核当前 PR 变更的一个 skill
 - [ ] 明确 rejected / needs_manual_review 判定规则
 
@@ -423,6 +424,7 @@ npm test -- validate-review-report
 - [ ] 运行 TS 预检
 - [ ] 校验一个 PR 只改一个 skill
 - [ ] 校验 `EVAL.md` 与 JSON 均存在
+- [ ] 将 `artifacts/skill-review.json` 同步进 `EVAL.md` 的 YAML front matter
 - [ ] 将 `EVAL.md` 自动 commit 回 PR 分支，commit message 带 `[skip ci]`
 - [ ] rejected 时硬阻断
 

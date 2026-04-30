@@ -170,42 +170,35 @@ jobs:
             # (hard fail only for rejected)
           fi
 
-      - name: Extract review score for later import
+      - name: Sync structured review into EVAL.md front matter
         if: steps.check-status.outputs.status != 'rejected'
         run: |
           SKILLS="${{ needs.precheck.outputs.changed-skills }}"
           SKILL=$(echo "$SKILLS" | cut -d',' -f1)
-          node -e "
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
-            fs.writeFileSync('skills/${SKILL}/review-score.txt', String(data.totalScore));
-          "
-          echo "Score extracted for ${SKILL}"
+          EVAL_PATH="skills/${SKILL}/EVAL.md"
+          npx tsx scripts/sync-review-frontmatter.ts "$EVAL_PATH" artifacts/skill-review.json
 
-      - name: Commit EVAL.md and review score to PR
+      - name: Commit EVAL artifacts to PR
         run: |
           SKILLS="${{ needs.precheck.outputs.changed-skills }}"
           SKILL=$(echo "$SKILLS" | cut -d',' -f1)
           EVAL_PATH="skills/${SKILL}/EVAL.md"
-          SCORE_PATH="skills/${SKILL}/review-score.txt"
 
-          if [ ! -f "$EVAL_PATH" ] && [ ! -f "$SCORE_PATH" ]; then
-            echo "⚠️  Neither EVAL.md nor review-score.txt found, skipping commit"
-            exit 0
+          if [ ! -f "$EVAL_PATH" ]; then
+            echo "❌ Missing EVAL.md at $EVAL_PATH"
+            exit 1
           fi
 
           git config user.name "devcxl"
           git config user.email "64475363+devcxl@users.noreply.github.com"
 
-          for F in "$EVAL_PATH" "$SCORE_PATH"; do
-            [ -f "$F" ] && git add "$F"
-          done
+          git add "$EVAL_PATH"
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "chore: add AI review evaluation for ${SKILL} [skip ci]"
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
-            echo "✅ EVAL.md and review score committed to PR branch"
+            echo "✅ EVAL.md committed to PR branch with synced front matter"
           fi
 
       - name: Post review status comment

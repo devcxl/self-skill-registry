@@ -13,12 +13,12 @@
 import {
   readFileSync,
   existsSync,
-  mkdirSync,
   writeFileSync,
   unlinkSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
+import { parsePersistedReviewFrontmatter, type ReviewReport } from '@devcxl/registry-core';
 
 const ARTIFACTS_DIR = join(process.cwd(), 'artifacts');
 const PACKAGES_DIR = join(ARTIFACTS_DIR, 'packages');
@@ -32,6 +32,35 @@ interface PackageMeta {
   tarball: string;
   sha256: string;
   size: number;
+}
+
+function readPersistedReviewFromPath(
+  evalPath: string,
+  skillName: string,
+  expectedVersion: string,
+): ReviewReport {
+  if (!existsSync(evalPath)) {
+    console.error(`Missing persisted evaluation markdown: ${evalPath}`);
+    console.error(`Every released skill must carry a matching EVAL.md with structured front matter for import.`);
+    process.exit(1);
+  }
+
+  try {
+    return parsePersistedReviewFrontmatter(readFileSync(evalPath, 'utf-8'), skillName, expectedVersion);
+  } catch (err) {
+    console.error(`Failed to parse persisted review front matter: ${evalPath}`);
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
+function readPersistedReview(skillName: string, expectedVersion: string): ReviewReport {
+  const evalPath = join(process.cwd(), 'skills', skillName, 'EVAL.md');
+  return readPersistedReviewFromPath(evalPath, skillName, expectedVersion);
+}
+
+function buildReviewId(review: ReviewReport): string {
+  return `${review.skillName}:${review.skillVersion}`;
 }
 
 function getArgs() {
@@ -94,18 +123,14 @@ function main(): void {
     const category = manifest.category || null;
     const r2Key = `skills/${pkg.skillName}/${pkg.version}.tar.gz`;
 
-    // Read review score if available
-    let reviewScore = 0;
-    const reviewScorePath = join(process.cwd(), 'skills', pkg.skillName, 'review-score.txt');
-    if (existsSync(reviewScorePath)) {
-      const scoreText = readFileSync(reviewScorePath, 'utf-8').trim();
-      reviewScore = parseInt(scoreText, 10) || 0;
-    }
+    const review = readPersistedReview(pkg.skillName, pkg.version);
+    const reviewScore = review.totalScore;
+    const reviewStatus = review.reviewStatus;
 
     // UPSERT skills table
     sqlStatements.push(`
 INSERT INTO skills (name, description, category, tags, compatibility, latest_version, latest_score, review_status, lifecycle_status)
-VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', ${reviewScore}, 'approved', 'active')
+VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', ${reviewScore}, '${escapeSql(reviewStatus)}', 'active')
 ON CONFLICT(name) DO UPDATE SET
   description = excluded.description,
   category = COALESCE(excluded.category, skills.category),
@@ -118,13 +143,22 @@ ON CONFLICT(name) DO UPDATE SET
 WHERE excluded.latest_version > skills.latest_version;
 `.trim());
 
-    // Always update score if review data exists (even when version unchanged)
-    if (reviewScore > 0) {
-      sqlStatements.push(`
-UPDATE skills SET latest_score = ${reviewScore}, updated_at = datetime('now')
-WHERE name = '${escapeSql(pkg.skillName)}' AND latest_score < ${reviewScore};
+    // Keep latest review projection in sync for current version
+    sqlStatements.push(`
+UPDATE skills SET latest_score = ${reviewScore}, review_status = '${escapeSql(reviewStatus)}', updated_at = datetime('now')
+WHERE name = '${escapeSql(pkg.skillName)}' AND latest_version = '${escapeSql(pkg.version)}';
 `.trim());
-    }
+
+    sqlStatements.push(`
+INSERT INTO skill_reviews (id, skill_name, version, review_status, total_score, summary, review_json, created_at)
+VALUES ('${escapeSql(buildReviewId(review))}', '${escapeSql(pkg.skillName)}', '${escapeSql(pkg.version)}', '${escapeSql(reviewStatus)}', ${reviewScore}, '${escapeSql(review.summary)}', '${escapeSql(JSON.stringify(review))}', '${escapeSql(review.reviewedAt)}')
+ON CONFLICT(id) DO UPDATE SET
+  review_status = excluded.review_status,
+  total_score = excluded.total_score,
+  summary = excluded.summary,
+  review_json = excluded.review_json,
+  created_at = excluded.created_at;
+`.trim());
 
     // UPSERT skill_versions (immutability check)
     sqlStatements.push(`

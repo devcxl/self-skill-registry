@@ -1,3 +1,28 @@
+---
+skillName: github-release-checker
+skillVersion: 2.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 77
+categoryScores:
+  functional-suitability: 10
+  reliability: 9
+  performance: 7
+  usability-ai: 12
+  usability-human: 6
+  security: 11
+  maintainability: 9
+  agent-specific: 16
+findings: []
+summary: >-
+  The skill is approved with a 77/100 baseline score. Core
+  release-fetching workflow, option surface, and safety profile are solid;
+  the main follow-up items are retry handling, documentation depth around
+  version matching, and stronger automated test coverage.
+reviewedAt: 2026-04-29T00:00:00Z
+reviewer: AI-Evaluator
+---
+
 # github-release-checker Evaluation
 
 **Date:** 2026-04-29

@@ -12,16 +12,23 @@ Evaluate skills across 25 criteria using a hybrid automated + manual approach.
 1. **One Skill Per PR**: When invoked in CI, only review the ONE skill that was changed in this PR. Do not attempt to review all skills in the repository.
 
 2. **Dual Output Required**: Every review MUST produce TWO outputs:
-   - `skills/<skill-name>/EVAL.md` — Human-readable evaluation report
+   - `skills/<skill-name>/EVAL.md` — Human-readable evaluation report body
    - `artifacts/skill-review.json` — Machine-readable structured review data
+
+   The CI workflow will sync the structured JSON into the YAML front matter of `EVAL.md` after your run. Do **not** manually add or maintain front matter inside `EVAL.md`; write the Markdown body only.
 
 3. **Hard Blocking**: If a skill is `rejected`, the CI job MUST fail (exit code 1). This is a hard gate — rejected skills must never be merged.
 
 ## Output Specification
 
-### 1. EVAL.md (Human-Readable)
+### 1. EVAL.md (Human-Readable Body)
 
 Write to `skills/<skill-name>/EVAL.md`. Use the template at [assets/EVAL-TEMPLATE.md](assets/EVAL-TEMPLATE.md).
+
+Important:
+- Write the Markdown report body only
+- Do not add YAML front matter yourself
+- The workflow will inject structured front matter based on `artifacts/skill-review.json`
 
 Must include:
 - Skill name, version, review date, evaluator identity
@@ -124,6 +131,8 @@ Use the rubric at [references/rubric.md](references/rubric.md) to score 25 crite
 ### 3. Write the evaluation
 
 Copy [assets/EVAL-TEMPLATE.md](assets/EVAL-TEMPLATE.md) to `skills/<skill-name>/EVAL.md`. Fill in automated results + manual scores.
+
+Do not prepend YAML front matter manually — the workflow owns that step.
 
 Also write `artifacts/skill-review.json` following the schema above.
 

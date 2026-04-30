@@ -47,7 +47,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_skill_versions_r2_key
 -- AI evaluation results, one per (skill_name, version)
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS skill_reviews (
-  id            TEXT PRIMARY KEY,                  -- UUID
+  id            TEXT PRIMARY KEY,                  -- stable key: <skill_name>:<version>
   skill_name    TEXT NOT NULL,
   version       TEXT NOT NULL,
   review_status TEXT NOT NULL,                     -- approved | rejected | needs_manual_review

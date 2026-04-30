@@ -20,6 +20,7 @@
   - [ ] OpenCode 审核执行
   - [ ] 产出 `EVAL.md`
   - [ ] 产出 `artifacts/skill-review.json`
+  - [ ] `skill-review.json` 已同步进 `EVAL.md` 的 YAML front matter
   - [ ] `EVAL.md` 自动 commit 回 PR 分支（含 `[skip ci]`）
   - [ ] 审核结果自动评论在 PR 上
 - [ ] **1.5** 如果审核 `approved`，PR 可合并

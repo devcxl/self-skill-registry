@@ -1,3 +1,29 @@
+---
+skillName: fastapi-fullstack
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 77
+categoryScores:
+  functional-suitability: 10
+  reliability: 8
+  performance: 7
+  usability-ai: 12
+  usability-human: 6
+  security: 10
+  maintainability: 10
+  agent-specific: 15
+findings: []
+summary: >-
+  The skill provides comprehensive, well-structured documentation for FastAPI
+  fullstack development with good progressive disclosure and template
+  coverage. The baseline score is 77/100, with follow-up work mainly around
+  trigger precision, fault tolerance guidance, and input validation
+  consistency.
+reviewedAt: 2026-04-30T00:00:00Z
+reviewer: AI-Evaluator
+---
+
 # fastapi-fullstack Evaluation
 
 **Date:** 2026-04-30

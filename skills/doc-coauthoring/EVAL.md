@@ -1,3 +1,30 @@
+---
+skillName: doc-coauthoring
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 91
+categoryScores:
+  functional-suitability: 10
+  reliability: 10
+  performance: 7
+  usability-ai: 16
+  usability-human: 8
+  security: 12
+  maintainability: 10
+  agent-specific: 18
+findings: []
+summary: >-
+  The `doc-coauthoring` skill is well-designed with clear trigger contexts,
+  a logical 3-stage workflow, good user agency (escape hatches), and
+  appropriate use of reference files. The 91/100 score indicates a
+  publishable skill. The P1 typo in `reader-testing-example.md` should be
+  fixed before publishing, and the P2 unlinked reference is a minor
+  documentation issue.
+reviewedAt: 2026-04-28T00:00:00Z
+reviewer: AI-Evaluator
+---
+
 # doc-coauthoring Evaluation
 
 **Date:** 2026-04-28
