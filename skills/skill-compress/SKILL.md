@@ -44,6 +44,10 @@ metadata:
 - 散文改为清单条目
 - 长示例、模板、参考说明移至 references/
 
+## References / 参考资料
+- [references/examples.md](references/examples.md)：当需要查看压缩前后对比、代表性改写示例、结构模板时加载。
+- [references/anti-patterns.md](references/anti-patterns.md)：当需要判断是否过度压缩、触发边界是否模糊、是否保留了“万能型”职责时加载。
+
 ### 5. 验证最小化
 最终应满足：直接理解何时使用 → 加载后直接执行 → 不易误触发相邻任务
 
