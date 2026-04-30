@@ -1,3 +1,70 @@
+---
+skillName: skill-compress
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 85
+categoryScores:
+  functional-suitability: 11
+  reliability: 12
+  performance: 8
+  usability-ai: 15
+  usability-human: 8
+  security: 12
+  maintainability: 12
+  agent-specific: 16
+findings:
+  - id: F001
+    criterion: description-length
+    category: trigger
+    score: 2
+    description: >-
+      Description is only 4 words (当用户要求精简 skill...). Too short for reliable
+      triggering. Risks false positives on generic 'compress' or 'skill'
+      mentions
+    priority: P0
+    suggestion: >-
+      Expand description with trigger context: 'Use when.../不要用于...' structure.
+      Add explicit do/don't boundaries
+  - id: F002
+    criterion: references-linked
+    category: documentation
+    score: 2
+    description: >-
+      anti-patterns.md and examples.md exist in references/ but are not
+      mentioned or linked from SKILL.md body
+    priority: P1
+    suggestion: >-
+      Add sentence in SKILL.md: '详见 references/anti-patterns.md 和
+      references/examples.md'
+  - id: F003
+    criterion: trigger-precision
+    category: agent-specific
+    score: 2
+    description: >-
+      Description lacks 'Use when...' trigger phrase pattern. Generic 'skill'
+      keyword could cause unintended activation
+    priority: P1
+    suggestion: Add explicit trigger contexts like '当用户要求精简 skill、减少体积时触发；不要用于业务代码'
+  - id: F004
+    criterion: progressive-disclosure
+    category: agent-specific
+    score: 3
+    description: >-
+      SKILL.md → references/ split is good but not utilized - references are not
+      mentioned in body
+    priority: P1
+    suggestion: Link references from SKILL.md body
+summary: >-
+  Skill is publishable with score 85/100. Main issues are description too short
+  (P0) and references not linked (P1). The skill itself is well-structured for
+  its purpose as a skill-compression utility. No credentials, no external deps,
+  no scripts. Fixed frontmatter with name/description/version/compatibility all
+  present.
+reviewedAt: '2026-04-30T10:15:00Z'
+reviewer: AI-Evaluator
+sourceCommit: skill/skill-compress
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # skill-compress Evaluation
