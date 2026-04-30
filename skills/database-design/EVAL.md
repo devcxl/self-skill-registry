@@ -1,3 +1,84 @@
+---
+skillName: database-design
+skillVersion: 2.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 79
+categoryScores:
+  functional-suitability: 10
+  reliability: 9
+  performance: 6
+  usability-ai: 14
+  usability-human: 6
+  security: 10
+  maintainability: 11
+  agent-specific: 13
+findings:
+  - id: F001
+    criterion: completeness
+    category: functional-suitability
+    score: 3
+    description: >-
+      Covers core MySQL design topics well (fixed fields, status fields, unique
+      constraints, index design). Missing some advanced topics like partitioning
+      pitfalls, cross-DB relationship patterns, and detailed sharding strategy
+      trade-offs.
+    priority: P2
+    suggestion: >-
+      Consider adding more detail on partitioning pitfalls (e.g., MySQL's
+      requirement that partition keys be part of primary/unique keys), cross-DB
+      relationship patterns, and more nuanced sharding trade-offs.
+  - id: F002
+    criterion: trigger-precision
+    category: agent-specific
+    score: 3
+    description: >-
+      Description improved to 56 words with proper trigger contexts (Use
+      when...). Contains good domain keywords but could include more
+      Chinese-specific terms like '数据库表结构设计', 'SQL表创建', 'EXPLAIN分析', '索引优化'.
+    priority: P1
+    suggestion: >-
+      Add additional Chinese trigger contexts and domain keywords to improve
+      activation reliability.
+  - id: F003
+    criterion: token-cost
+    category: performance
+    score: 3
+    description: >-
+      SKILL.md is 238 lines (within 150-250 acceptable range). Sections 5-7
+      (空白业务表模板, 分区与分片, 快速开始) are somewhat verbose and could be more concise or
+      moved to references/.
+    priority: P2
+    suggestion: >-
+      Consider condensing sections 5-7 or moving partitioning details to
+      references/ for a more compact core SKILL.md.
+  - id: F004
+    criterion: composability
+    category: agent-specific
+    score: 2
+    description: >-
+      No executable components. As a knowledge/documentation skill,
+      machine-readable output is limited but acceptable. Could benefit from
+      offering machine-readable schema definitions (e.g., JSON) for pipeline
+      composition.
+    priority: P2
+    suggestion: >-
+      Consider whether this skill could offer JSON schema output for table
+      definitions to support pipeline composition.
+summary: >-
+  Skill 'database-design' is well-structured with solid MySQL design content,
+  excellent progressive disclosure (SKILL.md + references/ + examples/), and no
+  security issues. All 13 automated checks pass. Description is now adequate (56
+  words). The skill covers core topics comprehensively with good consistency and
+  modularity. Minor improvements possible in trigger keyword breadth and token
+  efficiency. Score 79/100 is below the 80 threshold but above 60, and there are
+  no P0 blockers. Note: previous evaluation (79/100) cited a P0 for short
+  description (5 words) — this has been fixed in version 2.0.0 with a 56-word
+  description. Skill is approved for publishing.
+reviewedAt: '2026-04-30T11:35:00Z'
+reviewer: AI-Evaluator
+sourceCommit: skill/database-design
+---
 # database-design Evaluation
 
 **Date:** 2026-04-30
