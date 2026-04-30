@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: Use when designing, reviewing, or optimizing MySQL database schemas — covering table structure design, fixed audit fields, status field conventions, time field type selection, unique constraints for idempotency, and index design principles with EXPLAIN guidance. Triggers: 在项目中设计、评审或优化 MySQL 表结构，需要统一固定字段、状态字段、时间字段、唯一约束与索引设计规范时。Also relevant for database schema review, SQL table creation, index optimization, database migration design, and multi-table relationship modeling.
+description: "Use when designing, reviewing, or optimizing MySQL database schemas — covering table structure design, fixed audit fields, status field conventions, time field type selection, unique constraints for idempotency, and index design principles with EXPLAIN guidance. Triggers: 在项目中设计、评审或优化 MySQL 表结构，需要统一固定字段、状态字段、时间字段、唯一约束与索引设计规范时。Also relevant for database schema review, SQL table creation, index optimization, database migration design, and multi-table relationship modeling."
 version: 2.0.0
 compatibility:
   - opencode
