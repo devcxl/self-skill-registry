@@ -3,6 +3,9 @@ export interface LayoutProps {
   children?: unknown;
 }
 
+const tailwindConfigScript = `tailwind.config = { darkMode: 'class' }`;
+const darkModeInitScript = `if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); } function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }`;
+
 /** Base layout with Tailwind CDN, navigation, and footer */
 export function Layout({ title, children }: LayoutProps) {
   return (
@@ -11,19 +14,9 @@ export function Layout({ title, children }: LayoutProps) {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title} — Skill Registry</title>
-        <script>
-          tailwind.config = { darkMode: 'class' }
-        </script>
+        <script dangerouslySetInnerHTML={{ __html: tailwindConfigScript }} />
         <script src="https://cdn.tailwindcss.com" />
-        <script>
-          if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-          }
-          function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-          }
-        </script>
+        <script dangerouslySetInnerHTML={{ __html: darkModeInitScript }} />
       </head>
       <body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
         <nav class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
