@@ -17,7 +17,7 @@ export function Layout({ title, children }: LayoutProps) {
         <nav class="bg-white shadow-sm border-b">
           <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
             <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition">
-              🧰 Skill Registry
+              Skill Registry
             </a>
             <div class="flex gap-4 text-sm text-gray-600">
               <a href="/skills" class="hover:text-blue-600">Skills</a>

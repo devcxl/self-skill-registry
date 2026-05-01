@@ -82,9 +82,9 @@ export function SkillDetailPage({ skill }: { skill: SkillResponse }) {
 
         <div class="bg-white rounded-lg shadow-sm border p-6">
           <h2 class="text-lg font-semibold text-gray-800 mb-4">Install</h2>
-          <p class="text-sm text-gray-500 mb-1">npx skill</p>
+          <p class="text-sm text-gray-500 mb-1">npx skills</p>
           <pre class="bg-gray-900 text-green-400 p-3 rounded text-sm overflow-x-auto mb-4">
-            npx skill install {skill.name}
+            npx skills add devcxl/self-skill-registry --skill {skill.name}
           </pre>
           <p class="text-sm text-gray-500 mb-1">Direct download</p>
           <a href={`/v1/skills/${skill.name}/download?version=${skill.latestVersion}`}
