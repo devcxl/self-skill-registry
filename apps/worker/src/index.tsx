@@ -49,36 +49,44 @@ app.get('/admin', async (c) => {
 
   return c.html(
     <Layout title="Admin">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-        <p class="text-gray-600">Manage skills and users</p>
+      <div class="mb-10">
+        <h1 class="font-display text-display-md text-ink mb-2">Admin Panel</h1>
+        <p class="text-muted">Manage skills and users</p>
       </div>
 
-      <div class="mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+      <section class="mb-12">
+        <h2 class="font-display text-display-sm text-ink mb-6">
           Pending / Non-Approved Skills ({pending.length})
         </h2>
         {pending.length === 0 ? (
-          <p class="text-gray-500">No pending skills.</p>
+          <p class="text-muted py-8 text-center bg-surface-soft rounded-lg">No pending skills.</p>
         ) : (
           <div class="space-y-3">
             {pending.map((s) => (
-              <div class="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+              <div class="bg-surface-card rounded-lg p-5 flex items-center justify-between">
                 <div>
-                  <h3 class="font-semibold text-gray-900">{s.name}</h3>
-                  <p class="text-sm text-gray-500">
+                  <h3 class="font-sans font-medium text-ink">{s.name}</h3>
+                  <p class="text-sm text-muted mt-1">
                     v{s.latest_version} · Score: {s.latest_score} · Status:{' '}
-                    <span class="font-medium text-yellow-600">{s.review_status}</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-accent-amber/15 text-accent-amber">
+                      {s.review_status}
+                    </span>
                   </p>
                 </div>
                 <div class="flex gap-2">
                   <form action={`/admin/skills/${s.name}/approve`} method="post">
-                    <button type="submit" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                    <button
+                      type="submit"
+                      class="inline-flex items-center px-4 py-2 bg-success text-on-primary text-sm font-medium rounded-md hover:bg-success/85 transition-colors"
+                    >
                       Approve
                     </button>
                   </form>
                   <form action={`/admin/skills/${s.name}/reject`} method="post">
-                    <button type="submit" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700">
+                    <button
+                      type="submit"
+                      class="inline-flex items-center px-4 py-2 bg-[#b04545] text-on-primary text-sm font-medium rounded-md hover:bg-[#a03a3a] transition-colors"
+                    >
                       Reject
                     </button>
                   </form>
@@ -87,26 +95,29 @@ app.get('/admin', async (c) => {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      <div>
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">All Skills</h2>
+      <section>
+        <h2 class="font-display text-display-sm text-ink mb-6">All Skills</h2>
         <div class="space-y-2">
           {allSkills.map((s) => (
-            <div class="bg-white rounded shadow-sm border p-3 flex items-center justify-between">
+            <div class="bg-surface-card rounded-lg p-4 flex items-center justify-between">
               <div>
-                <a href={`/skills/${s.name}`} class="font-medium text-gray-900 hover:text-blue-600">
+                <a
+                  href={`/skills/${s.name}`}
+                  class="font-sans font-medium text-ink hover:text-primary transition-colors"
+                >
                   {s.name}
                 </a>
-                <span class="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                <span class="ml-2.5 inline-flex items-center px-2.5 py-0.5 text-xs rounded-pill bg-canvas text-muted">
                   {s.review_status}
                 </span>
               </div>
-              <span class="text-sm text-gray-500">v{s.latest_version}</span>
+              <span class="text-sm text-muted">v{s.latest_version}</span>
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </Layout>,
   );
 });

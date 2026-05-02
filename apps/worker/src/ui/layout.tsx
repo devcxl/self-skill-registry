@@ -3,7 +3,6 @@ export interface LayoutProps {
   children?: unknown;
 }
 
-/** Base layout with Tailwind CDN, navigation, and footer */
 export function Layout({ title, children }: LayoutProps) {
   return (
     <html lang="zh-CN">
@@ -11,41 +10,139 @@ export function Layout({ title, children }: LayoutProps) {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title} — Skill Registry</title>
-        <script src="https://cdn.tailwindcss.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:ital,opsz,wght@0,14..32,400..600&family=JetBrains+Mono:ital,wght@0,400;0,500&display=swap"
+          rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        canvas: '#faf9f5',
+        primary: { DEFAULT: '#cc785c', active: '#a9583e', disabled: '#e6dfd8' },
+        ink: '#141413',
+        bodycopy: '#3d3d3a',
+        'body-strong': '#252523',
+        muted: '#6c6a64',
+        'muted-soft': '#8e8b82',
+        hairline: '#e6dfd8',
+        'hairline-soft': '#ebe6df',
+        'surface-soft': '#f5f0e8',
+        'surface-card': '#efe9de',
+        'surface-cream-strong': '#e8e0d2',
+        'surface-dark': '#181715',
+        'surface-dark-elevated': '#252320',
+        'surface-dark-soft': '#1f1e1b',
+        'on-primary': '#ffffff',
+        'on-dark': '#faf9f5',
+        'on-dark-soft': '#a09d96',
+        'accent-teal': '#5db8a6',
+        'accent-amber': '#e8a55a',
+        success: '#5db872',
+        error: '#c64545',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', '"EB Garamond"', 'Garamond', '"Times New Roman"', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', '"SF Mono"', 'monospace'],
+      },
+      borderRadius: {
+        xs: '4px',
+        sm: '6px',
+        md: '8px',
+        lg: '12px',
+        xl: '16px',
+        pill: '9999px',
+      },
+      fontSize: {
+        'display-xl': ['3.5rem', { lineHeight: '1.05', letterSpacing: '-0.04em', fontWeight: '400' }],
+        'display-lg': ['2.75rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '400' }],
+        'display-md': ['2rem', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '400' }],
+        'display-sm': ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '400' }],
+      },
+    },
+  },
+}
+          `.trim(),
+          }}
+        />
       </head>
-      <body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
-        <nav class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
-          <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
-              Skill Registry
+      <body class="bg-canvas text-bodycopy min-h-screen flex flex-col font-sans antialiased">
+        {/* ── Top Navigation ──────────────────────────────── */}
+        <nav class="bg-canvas border-b border-hairline h-16">
+          <div class="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2.5 text-ink group select-none">
+              <svg
+                class="h-4 w-4 text-ink shrink-0"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+                <path
+                  d="M8 0.5V5.5M8 10.5V15.5M0.5 8H5.5M10.5 8H15.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span class="font-display text-xl tracking-tight text-ink">Skill Registry</span>
             </a>
-            <button id="theme-toggle" class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Toggle dark mode">
-              <svg class="hidden dark:block h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              <svg class="dark:hidden h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            </button>
+            <div class="flex items-center gap-6">
+              <a
+                href="/skills"
+                class="text-sm font-medium text-ink hover:text-primary transition-colors"
+              >
+                Browse
+              </a>
+              <a
+                href="/settings"
+                class="text-sm font-medium text-ink hover:text-primary transition-colors"
+              >
+                Settings
+              </a>
+              <a
+                href="/admin"
+                class="text-sm font-medium text-ink hover:text-primary transition-colors"
+              >
+                Admin
+              </a>
+            </div>
           </div>
         </nav>
 
-        <main class="flex-grow max-w-6xl mx-auto px-4 py-8 w-full">
+        {/* ── Content ─────────────────────────────────────── */}
+        <main class="flex-grow max-w-6xl mx-auto px-4 py-12 lg:py-24 w-full">
           {children}
         </main>
 
-        <footer class="bg-white dark:bg-gray-800 border-t dark:border-gray-700 py-4 text-center text-sm text-gray-400 dark:text-gray-500">
-          Skill Registry — Internal Use
+        {/* ── Footer ──────────────────────────────────────── */}
+        <footer class="bg-surface-dark text-on-dark-soft">
+          <div class="max-w-6xl mx-auto px-4 py-16 text-center">
+            <div class="flex items-center justify-center gap-2.5 mb-3">
+              <svg
+                class="h-4 w-4 text-on-dark-soft shrink-0"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+                <path
+                  d="M8 0.5V5.5M8 10.5V15.5M0.5 8H5.5M10.5 8H15.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <span class="font-display text-lg tracking-tight text-on-dark">Skill Registry</span>
+            </div>
+            <p class="text-sm">Internal tool for AI coding agent skills</p>
+          </div>
         </footer>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-          }
-          document.getElementById('theme-toggle')?.addEventListener('click', function() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-          });
-        ` }} />
       </body>
     </html>
   );

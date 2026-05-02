@@ -8,26 +8,101 @@ const auth = new Hono<HonoEnv>();
 // ── GET /auth/login ──────────────────────────────────────────────────
 
 auth.get('/login', (c) => {
-  return c.html(`
+  return c.html(
     <html lang="zh-CN">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Login — Skill Registry</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-50 min-h-screen flex items-center justify-center">
-      <div class="bg-white rounded-lg shadow-sm border p-8 max-w-md w-full">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6 text-center">Skill Registry</h1>
-        <p class="text-gray-600 mb-6 text-center">Sign in to manage your skills and API tokens.</p>
-        <a href="/auth/login/github"
-          class="block w-full text-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition">
-          Sign in with GitHub
-        </a>
-      </div>
-    </body>
-    </html>
-  `);
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Login — Skill Registry</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600&family=Inter:ital,opsz,wght@0,14..32,400..600&family=JetBrains+Mono:ital,wght@0,400;0,500&display=swap"
+          rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        canvas: '#faf9f5',
+        primary: { DEFAULT: '#cc785c', active: '#a9583e', disabled: '#e6dfd8' },
+        ink: '#141413',
+        bodycopy: '#3d3d3a',
+        'body-strong': '#252523',
+        muted: '#6c6a64',
+        'muted-soft': '#8e8b82',
+        hairline: '#e6dfd8',
+        'hairline-soft': '#ebe6df',
+        'surface-soft': '#f5f0e8',
+        'surface-card': '#efe9de',
+        'surface-cream-strong': '#e8e0d2',
+        'surface-dark': '#181715',
+        'surface-dark-elevated': '#252320',
+        'surface-dark-soft': '#1f1e1b',
+        'on-primary': '#ffffff',
+        'on-dark': '#faf9f5',
+        'on-dark-soft': '#a09d96',
+        'accent-teal': '#5db8a6',
+        'accent-amber': '#e8a55a',
+        success: '#5db872',
+        error: '#c64545',
+      },
+      fontFamily: {
+        display: ['"Cormorant Garamond"', '"EB Garamond"', 'Garamond', '"Times New Roman"', 'serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', '"SF Mono"', 'monospace'],
+      },
+      borderRadius: {
+        xs: '4px',
+        sm: '6px',
+        md: '8px',
+        lg: '12px',
+        xl: '16px',
+        pill: '9999px',
+      },
+      fontSize: {
+        'display-xl': ['3.5rem', { lineHeight: '1.05', letterSpacing: '-0.04em', fontWeight: '400' }],
+        'display-lg': ['2.75rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '400' }],
+        'display-md': ['2rem', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '400' }],
+        'display-sm': ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '400' }],
+      },
+    },
+  },
+}
+            `.trim(),
+          }}
+        />
+      </head>
+      <body class="bg-canvas text-bodycopy min-h-screen flex items-center justify-center font-sans antialiased">
+        <div class="bg-surface-card rounded-lg p-8 max-w-md w-full mx-4">
+          <div class="flex items-center justify-center gap-2.5 mb-6">
+            <svg
+              class="h-5 w-5 text-ink shrink-0"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <circle cx="8" cy="8" r="2.5" fill="currentColor" />
+              <path d="M8 0.5V5.5M8 10.5V15.5M0.5 8H5.5M10.5 8H15.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            <h1 class="font-display text-2xl tracking-tight text-ink">Skill Registry</h1>
+          </div>
+          <p class="text-muted text-sm mb-8 text-center leading-relaxed">
+            Sign in to manage your skills and API tokens.
+          </p>
+          <a
+            href="/auth/login/github"
+            class="block w-full text-center px-5 py-3 bg-surface-dark text-on-dark rounded-md text-sm font-medium hover:bg-surface-dark-elevated transition-colors"
+          >
+            Sign in with GitHub
+          </a>
+        </div>
+      </body>
+    </html>,
+  );
 });
 
 // ── GET /auth/login/github ────────────────────────────────────────────

@@ -27,46 +27,81 @@ settings.get('/', async (c) => {
   return c.html(
     <Layout title="Settings">
       <div class="max-w-2xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Account Settings</h1>
+        <h1 class="font-display text-display-md text-ink mb-10">Account Settings</h1>
 
-        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">Profile</h2>
-          <dl class="space-y-2">
-            <div><dt class="text-sm text-gray-500">Name</dt><dd class="text-gray-900">{user.display_name || '—'}</dd></div>
-            <div><dt class="text-sm text-gray-500">Email</dt><dd class="text-gray-900">{user.email || '—'}</dd></div>
-            <div><dt class="text-sm text-gray-500">Provider</dt><dd class="text-gray-900">{user.oidc_provider}</dd></div>
-            {!!user.is_admin && <div><dt class="text-sm text-gray-500">Role</dt><dd class="text-green-700 font-medium">Admin</dd></div>}
+        {/* ── Profile Card ──────────────────────────── */}
+        <div class="bg-surface-card rounded-lg p-8 mb-6">
+          <h2 class="font-sans text-lg font-medium text-ink mb-6">Profile</h2>
+          <dl class="space-y-4">
+            <div>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Name</dt>
+              <dd class="text-bodycopy">{user.display_name || '—'}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Email</dt>
+              <dd class="text-bodycopy">{user.email || '—'}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Provider</dt>
+              <dd class="text-bodycopy">{user.oidc_provider}</dd>
+            </div>
+            {!!user.is_admin && (
+              <div>
+                <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Role</dt>
+                <dd class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-success/15 text-success">
+                  Admin
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">API Tokens</h2>
+        {/* ── API Tokens Card ───────────────────────── */}
+        <div class="bg-surface-card rounded-lg p-8 mb-6">
+          <h2 class="font-sans text-lg font-medium text-ink mb-6">API Tokens</h2>
           {tokens.length === 0 ? (
-            <p class="text-gray-500 mb-4">No tokens yet.</p>
+            <p class="text-muted mb-6">No tokens yet.</p>
           ) : (
-            <ul class="space-y-2 mb-4">
+            <ul class="space-y-0 mb-6">
               {tokens.map((t) => (
-                <li class="flex items-center justify-between py-2 border-b text-sm">
-                  <span class="font-medium">{t.label}</span>
+                <li class="flex items-center justify-between py-3 border-b border-hairline text-sm">
+                  <span class="font-medium text-ink">{t.label}</span>
                   <form action="/settings/tokens/delete" method="post">
                     <input type="hidden" name="tokenId" value={t.id} />
-                    <button type="submit" class="text-red-600 hover:text-red-800">Revoke</button>
+                    <button
+                      type="submit"
+                      class="text-error text-sm font-medium hover:underline"
+                    >
+                      Revoke
+                    </button>
                   </form>
                 </li>
               ))}
             </ul>
           )}
-          <form action="/settings/tokens/create" method="post" class="flex gap-2">
-            <input type="text" name="label" value="default" placeholder="Label"
-              class="flex-grow px-3 py-2 border rounded-lg text-sm" />
-            <button type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+          <form action="/settings/tokens/create" method="post" class="flex gap-3">
+            <input
+              type="text"
+              name="label"
+              value="default"
+              placeholder="Label"
+              class="flex-grow px-3.5 py-2.5 bg-canvas text-ink text-sm border border-hairline rounded-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-shadow"
+            />
+            <button
+              type="submit"
+              class="inline-flex items-center px-5 py-2.5 bg-primary text-on-primary rounded-md text-sm font-medium hover:bg-primary-active transition-colors"
+            >
               Create
             </button>
           </form>
         </div>
 
-        <a href="/auth/logout" class="text-red-600 hover:underline text-sm">Sign Out</a>
+        <a
+          href="/auth/logout"
+          class="inline-flex items-center text-error text-sm font-medium hover:underline"
+        >
+          Sign Out
+        </a>
       </div>
     </Layout>,
   );
@@ -84,15 +119,22 @@ settings.post('/tokens/create', async (c) => {
 
   return c.html(
     <Layout title="Token Created">
-      <div class="max-w-2xl mx-auto text-center py-12">
-        <h1 class="text-2xl font-bold text-gray-900 mb-4">Token Created</h1>
-        <p class="text-red-600 font-semibold mb-4">
-          ⚠️ Copy this token now. It will not be shown again.
+      <div class="max-w-lg mx-auto text-center py-12">
+        <h1 class="font-display text-display-sm text-ink mb-4">Token Created</h1>
+        <p class="text-error font-medium text-sm mb-6">
+          Copy this token now. It will not be shown again.
         </p>
-        <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto mb-6 mx-auto max-w-xl">
-          {token}
-        </pre>
-        <a href="/settings" class="text-blue-600 hover:underline">← Back to Settings</a>
+        <div class="bg-surface-dark rounded-lg p-5 mb-8">
+          <pre class="text-on-dark text-sm font-mono overflow-x-auto leading-relaxed">
+            {token}
+          </pre>
+        </div>
+        <a
+          href="/settings"
+          class="inline-flex items-center px-5 py-3 bg-canvas text-ink border border-hairline rounded-md text-sm font-medium hover:bg-surface-soft transition-colors"
+        >
+          ← Back to Settings
+        </a>
       </div>
     </Layout>,
   );
