@@ -57,3 +57,11 @@ export function getSessionUserId(c: Context<HonoEnv>): string | null {
   const match = cookie.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
   return match?.[1] || null;
 }
+
+/** Get full user object from session cookie (or null if not logged in) */
+export async function getSessionUser(c: Context<HonoEnv>) {
+  const userId = getSessionUserId(c);
+  if (!userId) return null;
+  const repo = new UserRepository(c.env.DB);
+  return repo.getUser(userId);
+}

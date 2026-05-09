@@ -1,9 +1,12 @@
+import type { User } from '../types/db';
+
 export interface LayoutProps {
   title: string;
   children?: unknown;
+  user?: User | null;
 }
 
-export function Layout({ title, children }: LayoutProps) {
+export function Layout({ title, children, user }: LayoutProps) {
   return (
     <html lang="zh-CN">
       <head>
@@ -100,18 +103,22 @@ tailwind.config = {
               >
                 Browse
               </a>
-              <a
-                href="/settings"
-                class="text-sm font-medium text-ink hover:text-primary transition-colors"
-              >
-                Settings
-              </a>
-              <a
-                href="/admin"
-                class="text-sm font-medium text-ink hover:text-primary transition-colors"
-              >
-                Admin
-              </a>
+              {user && (
+                <a
+                  href="/settings"
+                  class="text-sm font-medium text-ink hover:text-primary transition-colors"
+                >
+                  Settings
+                </a>
+              )}
+              {user && user.is_admin === 1 && (
+                <a
+                  href="/admin"
+                  class="text-sm font-medium text-ink hover:text-primary transition-colors"
+                >
+                  Admin
+                </a>
+              )}
             </div>
           </div>
         </nav>

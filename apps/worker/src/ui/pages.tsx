@@ -1,10 +1,10 @@
 import { Layout } from './layout';
-import type { SkillResponse } from '../types/db';
+import type { SkillResponse, User } from '../types/db';
 
 /** Home page with hero band and featured skills */
-export function HomePage({ skills }: { skills: SkillResponse[] }) {
+export function HomePage({ skills, user }: { skills: SkillResponse[]; user?: User | null }) {
   return (
-    <Layout title="Home">
+    <Layout title="Home" user={user}>
       {/* ── Hero Band ──────────────────────────────── */}
       <section class="text-center max-w-2xl mx-auto mb-16">
         <h1 class="font-display text-display-xl text-ink mb-6">
@@ -43,13 +43,15 @@ export function SkillsPage({
   skills,
   total,
   query,
+  user,
 }: {
   skills: SkillResponse[];
   total: number;
   query?: { q?: string; category?: string; page?: number; perPage?: number };
+  user?: User | null;
 }) {
   return (
-    <Layout title="Skills">
+    <Layout title="Skills" user={user}>
       <div class="mb-10">
         <h1 class="font-display text-display-md text-ink mb-2">Skills</h1>
         <p class="text-muted">{total} skill(s) available</p>
@@ -78,9 +80,9 @@ export function SkillsPage({
 }
 
 /** Skill detail page */
-export function SkillDetailPage({ skill }: { skill: SkillResponse }) {
+export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: User | null }) {
   return (
-    <Layout title={skill.name}>
+    <Layout title={skill.name} user={user}>
       <div class="mb-10">
         <a
           href="/skills"
@@ -126,9 +128,9 @@ export function SkillDetailPage({ skill }: { skill: SkillResponse }) {
 }
 
 /** Error page */
-export function ErrorPage({ title, message }: { title: string; message: string }) {
+export function ErrorPage({ title, message, user }: { title: string; message: string; user?: User | null }) {
   return (
-    <Layout title={title}>
+    <Layout title={title} user={user}>
       <div class="text-center py-16 max-w-md mx-auto">
         <h1 class="font-display text-display-sm text-ink mb-4">{title}</h1>
         <p class="text-muted mb-8">{message}</p>

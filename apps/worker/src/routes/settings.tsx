@@ -25,7 +25,7 @@ settings.get('/', async (c) => {
   const tokens = await repo.listTokens(user.id);
 
   return c.html(
-    <Layout title="Settings">
+    <Layout title="Settings" user={user}>
       <div class="max-w-2xl mx-auto">
         <h1 class="font-display text-display-md text-ink mb-10">Account Settings</h1>
 
@@ -118,7 +118,7 @@ settings.post('/tokens/create', async (c) => {
   const { token } = await repo.createToken(user.id, form.label || 'default');
 
   return c.html(
-    <Layout title="Token Created">
+    <Layout title="Token Created" user={user}>
       <div class="max-w-lg mx-auto text-center py-12">
         <h1 class="font-display text-display-sm text-ink mb-4">Token Created</h1>
         <p class="text-error font-medium text-sm mb-6">
