@@ -55,7 +55,7 @@ metadata:
 
 ## Key Components
 
-### 1. SecurityConfig 配置
+### SecurityConfig 配置
 
 ```java
 @Configuration
@@ -84,77 +84,7 @@ public class SecurityConfig {
 }
 ```
 
-### 2. CustomAuthorizationRequestResolver (PKCE支持)
-
-添加PKCE参数增强安全性：
-
-```java
-public class CustomAuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
-
-    private final StringKeyGenerator secureKeyGenerator = new Base64StringKeyGenerator(
-        Base64.getUrlEncoder().withoutPadding(), 96);
-
-    private void addPkceParameters(Map<String, Object> attributes,
-                                   Map<String, Object> additionalParameters) {
-        String codeVerifier = this.secureKeyGenerator.generateKey();
-        attributes.put(PkceParameterNames.CODE_VERIFIER, codeVerifier);
-        try {
-            String codeChallenge = createHash(codeVerifier);  // SHA-256
-            additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, codeChallenge);
-            additionalParameters.put(PkceParameterNames.CODE_CHALLENGE_METHOD, "S256");
-        } catch (NoSuchAlgorithmException e) {
-            additionalParameters.put(PkceParameterNames.CODE_CHALLENGE, codeVerifier);
-        }
-    }
-}
-```
-
-### 3. OAuth2AuthenticationSuccessHandler (Token生成与重定向)
-
-核心：登录成功后创建JWT并重定向回前端：
-
-```java
-@Component
-public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-
-    protected String determineTargetUrl(HttpServletRequest request,
-                                       HttpServletResponse response,
-                                       Authentication authentication) {
-        // 1. 从Cookie获取原始redirect_uri
-        Optional<String> redirectUri = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
-            .map(Cookie::getValue);
-
-        // 2. 校验redirect_uri合法性
-        if (redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
-            throw new BadRequestException("Unauthorized Redirect URI");
-        }
-
-        // 3. 生成JWT Token
-        String token = tokenProvider.createToken(authentication);
-
-        // 4. 发布登录事件（可选：记录日志、统计等）
-        applicationEventPublisher.publishEvent(
-            new LoginSuccessEvent(userPrincipal.getId(), clientIp));
-
-        // 5. 重定向到前端，token放在URL参数中
-        return UriComponentsBuilder.fromUriString(targetUrl)
-            .queryParam("token", token)
-            .build().toUriString();
-    }
-
-    private boolean isAuthorizedRedirectUri(String uri) {
-        // 只校验host和port，允许前端使用不同路径
-        URI clientRedirectUri = URI.create(uri);
-        return authorizedRedirectUris.stream().anyMatch(authorized -> {
-            URI authorizedUri = URI.create(authorized);
-            return authorizedUri.getHost().equalsIgnoreCase(clientRedirectUri.getHost())
-                && authorizedUri.getPort() == clientRedirectUri.getPort();
-        });
-    }
-}
-```
-
-### 4. Cookie存储OAuth状态
+### Cookie存储OAuth状态
 
 ```java
 public class HttpCookieOAuth2AuthorizationRequestRepository
@@ -177,7 +107,49 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
 }
 ```
 
-### 5. 配置文件
+### OAuth2AuthenticationSuccessHandler
+
+```java
+@Component
+public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    protected String determineTargetUrl(HttpServletRequest request,
+                                       HttpServletResponse response,
+                                       Authentication authentication) {
+        // 1. 从Cookie获取原始redirect_uri
+        Optional<String> redirectUri = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
+            .map(Cookie::getValue);
+
+        // 2. 校验redirect_uri合法性
+        if (redirectUri.isPresent() && !isAuthorizedRedirectUri(redirectUri.get())) {
+            throw new BadRequestException("Unauthorized Redirect URI");
+        }
+
+        // 3. 生成JWT Token
+        String token = tokenProvider.createToken(authentication);
+
+        // 4. 发布登录事件
+        applicationEventPublisher.publishEvent(
+            new LoginSuccessEvent(userPrincipal.getId(), clientIp));
+
+        // 5. 重定向到前端，token放在URL参数中
+        return UriComponentsBuilder.fromUriString(targetUrl)
+            .queryParam("token", token)
+            .build().toUriString();
+    }
+
+    private boolean isAuthorizedRedirectUri(String uri) {
+        URI clientRedirectUri = URI.create(uri);
+        return authorizedRedirectUris.stream().anyMatch(authorized -> {
+            URI authorizedUri = URI.create(authorized);
+            return authorizedUri.getHost().equalsIgnoreCase(clientRedirectUri.getHost())
+                && authorizedUri.getPort() == clientRedirectUri.getPort();
+        });
+    }
+}
+```
+
+### 配置文件
 
 ```yaml
 # application.yml
@@ -216,7 +188,7 @@ const loginWithGoogle = () => {
 // 或携带更多参数
 const loginWithGoogle = (extraParams) => {
   const redirectUri = encodeURIComponent(window.location.origin + '/callback');
-  const state = btoa(JSON.stringify(extraParams)); // base64编码状态
+  const state = btoa(JSON.stringify(extraParams));
   window.location.href = `https://api.example.com/oauth2/authorize/google?redirect_uri=${redirectUri}&state=${state}`;
 };
 ```
@@ -230,16 +202,10 @@ const handleOAuthCallback = () => {
   const token = urlParams.get('token');
 
   if (token) {
-    // 存储token
     localStorage.setItem('access_token', token);
-
-    // 清除URL中的token（安全考虑）
     window.history.replaceState({}, document.title, window.location.pathname);
-
-    // 跳转到主页
     router.push('/home');
   } else {
-    // 处理错误
     const error = urlParams.get('error');
     console.error('OAuth error:', error);
   }
@@ -261,23 +227,18 @@ axios.interceptors.request.use(config => {
 
 ## User Creation Flow
 
-登录时自动创建用户（如果不存在）：
-
 ```java
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private OAuth2User processOAuth2User(OAuth2UserRequest oAuth2UserRequest,
                                          Map<String, Object> userAttributes) {
-        // 1. 获取用户信息（通过OAuth2UserInfoFactory适配不同Provider）
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
             oAuth2UserRequest.getClientRegistration().getRegistrationId(),
             userAttributes);
 
-        // 2. 查询是否已存在
         AccountInfoDto user = accountInfoMapper.getByAccount(oAuth2UserInfo.getEmail(), null);
 
-        // 3. 不存在则创建新用户
         if (user == null) {
             user = generatorUserFromOAuth2UserInfo(oAuth2UserInfo, source);
         }
@@ -293,33 +254,26 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 public String createToken(Authentication authentication) {
     Map<String, Object> header = new HashMap<>();
     header.put(JwtConstant.ISSUED_AT, currentTime);
-    header.put(JwtConstant.SUB, userId);           // 用户ID
-    header.put(JwtConstant.EXPIRATION, expTime);     // 过期时间（15天）
-    header.put(JwtConstant.FINGERPRINT, fingerprint); // 可选：设备指纹
-    return JWTUtil.createToken(header, signer);      // HS512签名
+    header.put(JwtConstant.SUB, userId);
+    header.put(JwtConstant.EXPIRATION, expTime);
+    header.put(JwtConstant.FINGERPRINT, fingerprint);
+    return JWTUtil.createToken(header, signer);
 }
 ```
-
-## Supported Providers
-
-| Provider | UserInfo Class | Key Fields |
-|----------|----------------|------------|
-| Google | GoogleOAuth2UserInfo | sub, name, email, picture |
-| Facebook | FacebookOAuth2UserInfo | id, name, email, picture |
-| GitHub | GithubOAuth2UserInfo | id, name, email, avatar_url |
-| LinkedIn | LinkedinOAuth2UserInfo | sub, name, email, picture |
-| Twitter | TwitterOAuth2UserInfo | data.id, data.username |
 
 ## Quick Reference
 
 | Component | File | Purpose |
 |-----------|------|---------|
 | SecurityConfig | config/SecurityConfig.java | 配置OAuth2端点、过滤器链 |
-| PKCE Resolver | security/oauth2/CustomAuthorizationRequestResolver.java | 添加code_verifier/challenge |
+| PKCE Resolver | references/pkce.md | 添加code_verifier/challenge |
 | Cookie Storage | security/oauth2/HttpCookieOAuth2AuthorizationRequestRepository.java | 无状态OAuth状态存储 |
 | Success Handler | security/oauth2/OAuth2AuthenticationSuccessHandler.java | 生成JWT并重定向 |
-| User Info | security/oauth2/user/*OAuth2UserInfo.java | 各Provider用户信息适配器 |
+| User Info | references/providers.md | 各Provider用户信息适配器 |
 | Token Provider | security/TokenProvider.java | JWT创建与验证 |
+| Error Codes | references/error-codes.md | 错误码与恢复方案 |
+| Token Refresh | references/token-refresh.md | 刷新Token流程 |
+| Testing | references/testing.md | 测试策略 |
 
 ## Common Mistakes
 
