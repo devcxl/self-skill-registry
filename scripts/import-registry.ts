@@ -147,7 +147,7 @@ WHERE excluded.latest_version > skills.latest_version;
 
     // Keep latest review projection in sync for current version
     sqlStatements.push(`
-UPDATE skills SET latest_score = ${reviewScore}, review_status = '${escapeSql(reviewStatus)}', updated_at = datetime('now')
+UPDATE skills SET latest_score = ${reviewScore}, review_status = '${escapeSql(reviewStatus)}', readme = COALESCE(${readme ? `'${escapeSql(readme)}'` : 'NULL'}, skills.readme), updated_at = datetime('now')
 WHERE name = '${escapeSql(pkg.skillName)}' AND latest_version = '${escapeSql(pkg.version)}';
 `.trim());
 
