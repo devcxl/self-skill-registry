@@ -123,6 +123,31 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
           </a>
         </div>
       </div>
+
+      {/* ── README Section ─────────────────────────── */}
+      {skill.readme && (
+        <div class="mt-10">
+          <h2 class="font-display text-display-sm text-ink mb-6">README</h2>
+          <div class="bg-surface-card rounded-lg p-8">
+            <script
+              id="skill-readme"
+              type="application/json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(skill.readme) }}
+            ></script>
+            <div id="readme-container" class="readme-content"></div>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+(function() {
+  var data = JSON.parse(document.getElementById('skill-readme').textContent);
+  document.getElementById('readme-container').innerHTML = marked.parse(data);
+})();
+                `.trim(),
+              }}
+            />
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

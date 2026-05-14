@@ -155,3 +155,27 @@ export function parseFrontmatter(content: string): SkillFrontmatter {
     metadata: data.metadata as SkillFrontmatter['metadata'],
   };
 }
+
+/**
+ * Parse SKILL.md content into frontmatter and markdown body.
+ * Convenience wrapper that returns both the parsed frontmatter and the raw body.
+ */
+export function parseSkillMarkdown(content: string): {
+  frontmatter: SkillFrontmatter;
+  readme: string;
+} {
+  const parsed = matter(content);
+  const data = parsed.data as Record<string, unknown>;
+  return {
+    frontmatter: {
+      name: data.name as string,
+      description: data.description as string,
+      version: data.version as string,
+      compatibility: data.compatibility as Compatibility[],
+      tags: data.tags as string[] | undefined,
+      category: data.category as string | undefined,
+      metadata: data.metadata as SkillFrontmatter['metadata'],
+    },
+    readme: (parsed.content || '').trim(),
+  };
+}

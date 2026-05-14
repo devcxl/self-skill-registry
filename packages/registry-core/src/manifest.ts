@@ -9,6 +9,7 @@ export function buildManifest(
   options?: {
     sourceCommit?: string;
     publishedAt?: string;
+    readme?: string;
   },
 ): SkillManifest {
   return {
@@ -21,6 +22,7 @@ export function buildManifest(
     category: frontmatter.category,
     sourceCommit: options?.sourceCommit,
     publishedAt: options?.publishedAt ?? new Date().toISOString(),
+    readme: options?.readme,
   };
 }
 
@@ -47,6 +49,7 @@ export function manifestToSkill(
     lifecycleStatus: options?.lifecycleStatus ?? 'active',
     createdAt: manifest.publishedAt ?? new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    readme: manifest.readme,
   };
 }
 

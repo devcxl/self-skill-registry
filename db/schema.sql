@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS skills (
   latest_score  INTEGER DEFAULT 0,                 -- latest review score (0–100)
   review_status TEXT NOT NULL DEFAULT 'pending',   -- pending | approved | rejected | needs_manual_review
   lifecycle_status TEXT NOT NULL DEFAULT 'active',        -- active | deprecated | archived
+  readme        TEXT,                              -- SKILL.md markdown body content
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );

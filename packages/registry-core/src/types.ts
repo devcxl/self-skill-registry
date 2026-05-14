@@ -51,6 +51,7 @@ export interface Skill {
   lifecycleStatus: LifecycleStatus;
   createdAt: string;
   updatedAt: string;
+  readme?: string;
 }
 
 /** Skill version record */
@@ -75,6 +76,7 @@ export interface SkillManifest {
   category?: string;
   sourceCommit?: string;
   publishedAt?: string;
+  readme?: string;
 }
 
 /** Full registry index (for index.json) */

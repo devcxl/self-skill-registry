@@ -24,7 +24,7 @@ export type {
   SecurityScanResult,
 } from './types';
 
-export { validateSkill, parseFrontmatter } from './validator';
+export { validateSkill, parseFrontmatter, parseSkillMarkdown } from './validator';
 export {
   scanForSecrets,
   checkPathTraversal,

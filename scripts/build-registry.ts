@@ -9,7 +9,7 @@
 
 import { readdirSync, readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseFrontmatter, buildManifest, manifestToSkill, buildIndex } from '@devcxl/registry-core';
+import { parseSkillMarkdown, buildManifest, manifestToSkill, buildIndex } from '@devcxl/registry-core';
 import type { SkillManifest, Skill } from '@devcxl/registry-core';
 
 const SKILLS_DIR = join(process.cwd(), 'skills');
@@ -48,10 +48,10 @@ function main(): void {
     }
 
     const content = readFileSync(skillMdPath, 'utf-8');
-    const fm = parseFrontmatter(content);
+    const { frontmatter: fm, readme } = parseSkillMarkdown(content);
 
     // Build manifest using pure function
-    const manifest: SkillManifest = buildManifest(fm, { sourceCommit });
+    const manifest: SkillManifest = buildManifest(fm, { sourceCommit, readme });
     const manifestPath = join(MANIFESTS_DIR, `${fm.name}.json`);
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     console.log(`📄 ${fm.name}: Manifest built (v${fm.version})`);

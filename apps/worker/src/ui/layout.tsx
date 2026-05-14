@@ -20,6 +20,7 @@ export function Layout({ title, children, user }: LayoutProps) {
           rel="stylesheet"
         />
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -73,6 +74,29 @@ tailwind.config = {
   },
 }
           `.trim(),
+          }}
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+.readme-content { color: #3d3d3a; line-height: 1.8; font-size: 15px; }
+.readme-content h1 { font-size: 1.8em; font-weight: 600; margin: 1.5em 0 0.6em; color: #141413; }
+.readme-content h2 { font-size: 1.4em; font-weight: 600; margin: 1.3em 0 0.5em; color: #141413; padding-bottom: 0.3em; border-bottom: 1px solid #e6dfd8; }
+.readme-content h3 { font-size: 1.15em; font-weight: 600; margin: 1.2em 0 0.4em; color: #252523; }
+.readme-content p { margin-bottom: 0.8em; }
+.readme-content ul, .readme-content ol { margin: 0.5em 0 0.8em 1.5em; }
+.readme-content li { margin-bottom: 0.3em; }
+.readme-content code { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; background: #f5f0e8; padding: 0.15em 0.4em; border-radius: 4px; }
+.readme-content pre { background: #181715; color: #faf9f5; padding: 1em 1.2em; border-radius: 8px; overflow-x: auto; margin: 1em 0; font-size: 13px; line-height: 1.6; }
+.readme-content pre code { background: none; padding: 0; color: inherit; }
+.readme-content table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+.readme-content th { text-align: left; font-weight: 600; padding: 0.6em 0.8em; border-bottom: 2px solid #e6dfd8; background: #f5f0e8; }
+.readme-content td { padding: 0.5em 0.8em; border-bottom: 1px solid #ebe6df; }
+.readme-content blockquote { margin: 1em 0; padding: 0.5em 1em; border-left: 3px solid #cc785c; background: #faf9f5; color: #6c6a64; }
+.readme-content a { color: #cc785c; text-decoration: underline; }
+.readme-content hr { border: none; border-top: 1px solid #e6dfd8; margin: 1.5em 0; }
+.readme-content img { max-width: 100%; border-radius: 8px; }
+            `.trim(),
           }}
         />
       </head>

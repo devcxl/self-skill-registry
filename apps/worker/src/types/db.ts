@@ -10,6 +10,7 @@ export interface Skill {
   latest_score: number;
   review_status: string;
   lifecycle_status: string;
+  readme: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +77,7 @@ export interface SkillResponse {
   latestScore: number;
   reviewStatus: string;
   lifecycleStatus: string;
+  readme?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +94,7 @@ export function toSkillResponse(db: Skill): SkillResponse {
     latestScore: db.latest_score,
     reviewStatus: db.review_status,
     lifecycleStatus: db.lifecycle_status,
+    readme: db.readme || undefined,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   };

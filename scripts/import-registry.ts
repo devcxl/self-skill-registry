@@ -112,7 +112,7 @@ function main(): void {
   for (const pkg of packages) {
     // Read manifest for description and metadata
     const manifestFile = join(MANIFESTS_DIR, `${pkg.skillName}.json`);
-    let manifest: { description?: string; compatibility?: string[]; tags?: string[]; category?: string } = {};
+    let manifest: { description?: string; compatibility?: string[]; tags?: string[]; category?: string; readme?: string } = {};
     if (existsSync(manifestFile)) {
       manifest = JSON.parse(readFileSync(manifestFile, 'utf-8'));
     }
@@ -121,6 +121,7 @@ function main(): void {
     const compatibility = (manifest.compatibility || []).join(',');
     const tags = (manifest.tags || []).join(',');
     const category = manifest.category || null;
+    const readme = manifest.readme || null;
     const r2Key = `skills/${pkg.skillName}/${pkg.version}.tar.gz`;
 
     const review = readPersistedReview(pkg.skillName, pkg.version);
@@ -129,8 +130,8 @@ function main(): void {
 
     // UPSERT skills table
     sqlStatements.push(`
-INSERT INTO skills (name, description, category, tags, compatibility, latest_version, latest_score, review_status, lifecycle_status)
-VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', ${reviewScore}, '${escapeSql(reviewStatus)}', 'active')
+INSERT INTO skills (name, description, category, tags, compatibility, latest_version, latest_score, review_status, lifecycle_status, readme)
+VALUES ('${escapeSql(pkg.skillName)}', '${escapeSql(description)}', ${category ? `'${escapeSql(category)}'` : 'NULL'}, ${tags ? `'${escapeSql(tags)}'` : 'NULL'}, '${escapeSql(compatibility)}', '${escapeSql(pkg.version)}', ${reviewScore}, '${escapeSql(reviewStatus)}', 'active', ${readme ? `'${escapeSql(readme)}'` : 'NULL'})
 ON CONFLICT(name) DO UPDATE SET
   description = excluded.description,
   category = COALESCE(excluded.category, skills.category),
@@ -139,6 +140,7 @@ ON CONFLICT(name) DO UPDATE SET
   latest_version = excluded.latest_version,
   latest_score = excluded.latest_score,
   review_status = excluded.review_status,
+  readme = COALESCE(excluded.readme, skills.readme),
   updated_at = datetime('now')
 WHERE excluded.latest_version > skills.latest_version;
 `.trim());

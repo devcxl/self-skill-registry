@@ -17,6 +17,7 @@ describe('API Response Transformers', () => {
       lifecycle_status: 'active',
       created_at: '2025-01-01',
       updated_at: '2025-01-02',
+      readme: null,
     };
 
     const result = toSkillResponse(row);
@@ -41,11 +42,33 @@ describe('API Response Transformers', () => {
       lifecycle_status: 'active',
       created_at: '2025-01-01',
       updated_at: '2025-01-01',
+      readme: null,
     };
 
     const result = toSkillResponse(row);
     expect(result.tags).toBeUndefined();
     expect(result.category).toBeUndefined();
+    expect(result.readme).toBeUndefined();
+  });
+
+  it('should pass through readme when present', () => {
+    const row = {
+      name: 'readme-skill',
+      description: 'Has readme',
+      category: null,
+      tags: null,
+      compatibility: 'opencode',
+      latest_version: '1.0.0',
+      latest_score: 80,
+      review_status: 'approved',
+      lifecycle_status: 'active',
+      created_at: '2025-01-01',
+      updated_at: '2025-01-01',
+      readme: '# Hello\n\nThis is a **markdown** body.',
+    };
+
+    const result = toSkillResponse(row);
+    expect(result.readme).toBe('# Hello\n\nThis is a **markdown** body.');
   });
 
   it('should transform version db row', () => {
