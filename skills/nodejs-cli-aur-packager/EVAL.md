@@ -1,3 +1,44 @@
+---
+skillName: nodejs-cli-aur-packager
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 91
+categoryScores:
+  functional-suitability: 12
+  reliability: 10
+  performance: 8
+  usability-ai: 16
+  usability-human: 6
+  security: 12
+  maintainability: 12
+  agent-specific: 15
+findings:
+  - id: F001
+    criterion: 8.1-trigger-precision
+    category: agent-specific
+    score: 3
+    description: >-
+      Triggers 'generate PKGBUILD' / '为 npm 包生成 PKGBUILD' may overlap with
+      broader AUR/packaging skills if they exist in the registry. Could benefit
+      from more specific triggers like 'npm CLI to AUR' or 'package npm CLI tool
+      to Arch Linux AUR'.
+    priority: P1
+    suggestion: >-
+      Add more specific trigger keywords to reduce overlap risk with general
+      AUR/packaging skills. Consider triggers like 'npm CLI to AUR', 'package
+      npm CLI tool to Arch Linux AUR', or '把 npm CLI 工具打包成 Arch Linux AUR'.
+summary: >-
+  Skill scored 91/100 — approved for publishing. 13/13 automated structural
+  checks passed. No P0 blocking issues. One P1 suggestion: add more specific
+  trigger keywords to avoid overlap with broader AUR/packaging skills. Excellent
+  progressive disclosure, zero credentials, strong correctness and
+  appropriateness. Full workflow coverage for packaging npm CLI tools into Arch
+  Linux AUR packages.
+reviewedAt: '2026-05-14T12:16:33Z'
+reviewer: AI-Evaluator
+sourceCommit: skill/nodejs-cli-aur-packager
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # nodejs-cli-aur-packager Evaluation
