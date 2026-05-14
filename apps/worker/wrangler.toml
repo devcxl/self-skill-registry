@@ -21,6 +21,11 @@ database_id = "skill-registry"
 binding = "R2"
 bucket_name = "skill-registry-packages"
 
+# KV Namespace for OAuth state and web sessions (local dev)
+[[kv_namespaces]]
+binding = "AUTH_CACHE"
+id = "local-auth-cache"
+
 # ── Staging ───────────────────────────────────────────────────────
 
 [env.staging]
@@ -36,6 +41,11 @@ database_id = "97a6101a-fa0a-47c2-8869-1ded201765ae"
 binding = "R2"
 bucket_name = "skill-registry-packages-staging"
 
+[[env.staging.kv_namespaces]]
+binding = "AUTH_CACHE"
+# Created via: wrangler kv namespace create AUTH_CACHE --env staging
+id = "24f71f8882af44b298feece8db531e98"
+
 # ── Production ────────────────────────────────────────────────────
 
 [env.production]
@@ -50,3 +60,8 @@ database_id = "b4880814-58fb-4dcb-a568-37968635703b"
 [[env.production.r2_buckets]]
 binding = "R2"
 bucket_name = "skill-registry-packages-production"
+
+[[env.production.kv_namespaces]]
+binding = "AUTH_CACHE"
+# Created via: wrangler kv namespace create AUTH_CACHE --env production
+id = "b7b0eacfe3b945adbbe238d337895565"
