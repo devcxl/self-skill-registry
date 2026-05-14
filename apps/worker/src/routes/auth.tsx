@@ -1,9 +1,47 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { HonoEnv } from '../types/bindings';
 import { UserRepository } from '../db-users';
-import { setSessionCookie, clearSessionCookie, getSessionUserId } from '../middleware/auth';
+import { clearSession, createSession, getSessionUser } from '../middleware/auth';
+import { generateBase64UrlToken, sha256Base64Url, sha256Hex } from '../utils/crypto';
 
 const auth = new Hono<HonoEnv>();
+
+const OAUTH_STATE_COOKIE = 'skill_registry_oauth_state';
+const OAUTH_STATE_TTL_SECONDS = 60 * 10;
+
+interface OAuthStateRecord {
+  codeVerifier: string;
+  redirectUri: string;
+  createdAt: string;
+}
+
+function isSecureRequest(c: Context<HonoEnv>): boolean {
+  return new URL(c.req.url).protocol === 'https:';
+}
+
+async function oauthStateKey(state: string): Promise<string> {
+  return `oauth_state:${await sha256Hex(state)}`;
+}
+
+function setOAuthStateCookie(c: Context<HonoEnv>, state: string): void {
+  setCookie(c, OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    sameSite: 'Lax',
+    secure: isSecureRequest(c),
+    path: '/auth/callback/github',
+    maxAge: OAUTH_STATE_TTL_SECONDS,
+  });
+}
+
+function clearOAuthStateCookie(c: Context<HonoEnv>): void {
+  deleteCookie(c, OAUTH_STATE_COOKIE, {
+    sameSite: 'Lax',
+    secure: isSecureRequest(c),
+    path: '/auth/callback/github',
+  });
+}
 
 // ── GET /auth/login ──────────────────────────────────────────────────
 
@@ -107,21 +145,37 @@ tailwind.config = {
 
 // ── GET /auth/login/github ────────────────────────────────────────────
 
-auth.get('/login/github', (c) => {
+auth.get('/login/github', async (c) => {
   const clientId = c.env.GITHUB_CLIENT_ID;
   if (!clientId) {
     return c.json({ error: 'GitHub OAuth not configured', code: 'CONFIG_ERROR' }, 500);
   }
 
   const redirectUri = `${new URL(c.req.url).origin}/auth/callback/github`;
-  const state = crypto.randomUUID();
+  const state = generateBase64UrlToken();
+  const codeVerifier = generateBase64UrlToken();
+  const codeChallenge = await sha256Base64Url(codeVerifier);
 
-  // Store state for CSRF protection (simple in-memory, use KV in production)
+  try {
+    await c.env.AUTH_CACHE.put(
+      await oauthStateKey(state),
+      JSON.stringify({ codeVerifier, redirectUri, createdAt: new Date().toISOString() } satisfies OAuthStateRecord),
+      { expirationTtl: OAUTH_STATE_TTL_SECONDS },
+    );
+  } catch (err) {
+    console.error('Failed to create OAuth state:', err);
+    return c.json({ error: 'OAuth state store unavailable', code: 'OAUTH_ERROR' }, 503);
+  }
+  setOAuthStateCookie(c, state);
+
   const params = new URLSearchParams({
     client_id: clientId,
+    response_type: 'code',
     redirect_uri: redirectUri,
     scope: 'read:user user:email',
     state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
   });
 
   return c.redirect(`https://github.com/login/oauth/authorize?${params}`);
@@ -133,6 +187,50 @@ auth.get('/callback/github', async (c) => {
   const code = c.req.query('code');
   if (!code) {
     return c.json({ error: 'Missing authorization code', code: 'OAUTH_ERROR' }, 400);
+  }
+
+  const state = c.req.query('state');
+  if (!state) {
+    return c.json({ error: 'Missing OAuth state', code: 'OAUTH_ERROR' }, 400);
+  }
+
+  const stateCookie = getCookie(c, OAUTH_STATE_COOKIE);
+  if (!stateCookie || stateCookie !== state) {
+    clearOAuthStateCookie(c);
+    return c.json({ error: 'Invalid OAuth state', code: 'OAUTH_ERROR' }, 400);
+  }
+
+  const stateKey = await oauthStateKey(state);
+  let stateRecord: string | null;
+  try {
+    stateRecord = await c.env.AUTH_CACHE.get(stateKey);
+    if (stateRecord) {
+      await c.env.AUTH_CACHE.delete(stateKey);
+    }
+  } catch (err) {
+    console.error('Failed to verify OAuth state:', err);
+    clearOAuthStateCookie(c);
+    return c.json({ error: 'OAuth state store unavailable', code: 'OAUTH_ERROR' }, 503);
+  }
+  clearOAuthStateCookie(c);
+
+  if (!stateRecord) {
+    return c.json({ error: 'Invalid or expired OAuth state', code: 'OAUTH_ERROR' }, 400);
+  }
+
+  let oauthState: OAuthStateRecord;
+  try {
+    const parsed = JSON.parse(stateRecord) as Partial<OAuthStateRecord>;
+    if (typeof parsed.codeVerifier !== 'string' || typeof parsed.redirectUri !== 'string') {
+      throw new Error('invalid state');
+    }
+    oauthState = {
+      codeVerifier: parsed.codeVerifier,
+      redirectUri: parsed.redirectUri,
+      createdAt: typeof parsed.createdAt === 'string' ? parsed.createdAt : '',
+    };
+  } catch {
+    return c.json({ error: 'Invalid OAuth state', code: 'OAUTH_ERROR' }, 400);
   }
 
   const clientId = c.env.GITHUB_CLIENT_ID;
@@ -151,10 +249,16 @@ auth.get('/callback/github', async (c) => {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: oauthState.redirectUri,
+        code_verifier: oauthState.codeVerifier,
+      }),
     });
     const tokenData = await tokenRes.json() as { access_token?: string; error?: string };
-    if (tokenData.error || !tokenData.access_token) {
+    if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       return c.json({ error: 'GitHub OAuth token exchange failed', code: 'OAUTH_ERROR' }, 400);
     }
     accessToken = tokenData.access_token;
@@ -168,7 +272,19 @@ auth.get('/callback/github', async (c) => {
     const userRes = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'skill-registry' },
     });
-    githubUser = await userRes.json() as typeof githubUser;
+    if (!userRes.ok) {
+      return c.json({ error: 'Failed to fetch GitHub user info', code: 'OAUTH_ERROR' }, 400);
+    }
+    const userData = await userRes.json() as Partial<{ id: number; login: string; name: string | null; email: string | null }>;
+    if (typeof userData.id !== 'number' || typeof userData.login !== 'string') {
+      return c.json({ error: 'Invalid GitHub user info', code: 'OAUTH_ERROR' }, 400);
+    }
+    githubUser = {
+      id: userData.id,
+      login: userData.login,
+      name: typeof userData.name === 'string' ? userData.name : undefined,
+      email: typeof userData.email === 'string' ? userData.email : undefined,
+    };
   } catch {
     return c.json({ error: 'Failed to fetch GitHub user info', code: 'NETWORK_ERROR' }, 502);
   }
@@ -180,9 +296,11 @@ auth.get('/callback/github', async (c) => {
       const emailRes = await fetch('https://api.github.com/user/emails', {
         headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'skill-registry' },
       });
-      const emails = await emailRes.json() as Array<{ email: string; primary: boolean }>;
-      const primary = emails.find((e) => e.primary);
-      email = primary?.email;
+      if (emailRes.ok) {
+        const emails = await emailRes.json() as Array<{ email?: string; primary?: boolean }>;
+        const primary = emails.find((e) => e.primary && e.email);
+        email = primary?.email;
+      }
     } catch {
       // Non-critical
     }
@@ -198,7 +316,12 @@ auth.get('/callback/github', async (c) => {
   });
 
   // Set session cookie
-  setSessionCookie(c, user.id);
+  try {
+    await createSession(c, user.id);
+  } catch (err) {
+    console.error('Failed to create session:', err);
+    return c.json({ error: 'Session store unavailable', code: 'OAUTH_ERROR' }, 503);
+  }
 
   // Redirect to settings page
   return c.redirect('/settings');
@@ -206,23 +329,17 @@ auth.get('/callback/github', async (c) => {
 
 // ── GET /auth/logout ──────────────────────────────────────────────────
 
-auth.get('/logout', (c) => {
-  clearSessionCookie(c);
+auth.get('/logout', async (c) => {
+  await clearSession(c);
   return c.redirect('/');
 });
 
 // ── GET /auth/me ─────────────────────────────────────────────────────
 
 auth.get('/me', async (c) => {
-  const userId = getSessionUserId(c);
-  if (!userId) {
-    return c.json({ error: 'Not authenticated', code: 'UNAUTHORIZED' }, 401);
-  }
-
-  const repo = new UserRepository(c.env.DB);
-  const user = await repo.getUser(userId);
+  const user = await getSessionUser(c);
   if (!user) {
-    return c.json({ error: 'User not found', code: 'NOT_FOUND' }, 404);
+    return c.json({ error: 'Not authenticated', code: 'UNAUTHORIZED' }, 401);
   }
 
   return c.json({

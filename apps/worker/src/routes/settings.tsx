@@ -2,17 +2,14 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { HonoEnv } from '../types/bindings';
 import { UserRepository } from '../db-users';
-import { getSessionUserId } from '../middleware/auth';
+import { getSessionUser } from '../middleware/auth';
 import { Layout } from '../ui/layout';
 
 const settings = new Hono<HonoEnv>();
 
 /** Require login — returns user or null */
 async function requireUser(c: Context<HonoEnv>) {
-  const userId = getSessionUserId(c);
-  if (!userId) return null;
-  const repo = new UserRepository(c.env.DB);
-  return repo.getUser(userId);
+  return getSessionUser(c);
 }
 
 // ── GET /settings ─────────────────────────────────────────────────────
