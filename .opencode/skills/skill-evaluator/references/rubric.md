@@ -4,6 +4,102 @@ Full multi-framework rubric with concrete criteria per score level.
 Automated checks (via `scripts/eval-skill.py`) cover structure, trigger, docs, scripts, and security.
 This rubric adds the **manual assessment** dimensions that require judgment.
 
+---
+
+## Step 1: Determine Skill Type
+
+Before scoring, determine the skill type. Run `python3 scripts/eval-skill.py <path>` and check:
+- **Tool skill**: Has executable scripts in `scripts/` (`.py`, `.js`, `.sh`, `.ts`). Score all 25 criteria normally.
+- **Documentation-only skill**: No executable scripts in `scripts/`. This is a reference guide, best-practice manual, or instructional content. Adjust scoring per § Document-Only Adjustments below.
+
+---
+
+## Document-Only Adjustments
+
+For documentation-only skills, the following criteria use **adjusted standards** because the skill has no executable pipeline:
+
+### Auto-Exempt Criteria (score 4 — not applicable to documentation)
+
+| Criterion | Reason |
+|-----------|--------|
+| 3.2 Execution Efficiency | No code to execute; no API calls or scans |
+| 8.3 Composability | No pipeline to compose (note: --json, stdin, exit codes don't apply) |
+| 8.4 Idempotency | Documentation is inherently idempotent — loading the same SKILL.md always yields the same instructions |
+| 8.5 Escape Hatches | No behavior to override (note: --force, --dry-run, --verbose don't apply) |
+
+### Adjusted Standards (use documentation-specific rubric)
+
+| Criterion | Documentation Context |
+|-----------|----------------------|
+| 2.1 Fault Tolerance | Does the doc guide the agent on how to handle errors and edge cases? |
+| 2.2 Error Reporting | Are error codes, troubleshooting steps, or recovery guidance provided? |
+| 4.3 Feedback Quality | Is the doc well-organized with clear sections, summaries, and progress checkpoints? |
+| 4.4 Error Prevention | Does the doc include warnings, prerequisites, known pitfalls, or constraints? |
+| 5.2 Forgiveness / Undo | Does the doc provide version info, rollback guidance, or safe-fallback instructions? |
+| 7.1 Modularity | Is the doc structured into logical sections or layered references? |
+| 7.2 Modifiability | Can new sections/topics be added with a clear pattern (e.g., copy-paste-modify a section)? |
+| 7.3 Testability | Does the doc provide test strategies, examples, or a testing reference file? |
+
+Adjusted scoring rules for documentation-only skills:
+
+#### 2.1 Fault Tolerance (doc-adjusted)
+- **4:** Comprehensive error guidance: error scenarios listed, recovery steps, retry strategies documented.
+- **3:** Error scenarios covered with recovery suggestions. Some edge cases omitted.
+- **2:** Mentions error handling but lacks concrete recovery steps.
+- **1:** Brief mention of "handle errors" with no specifics.
+- **0:** No error handling guidance.
+
+#### 2.2 Error Reporting (doc-adjusted)
+- **4:** Structured error reference (e.g., error-codes.md) with recovery guidance per error. Error messages are actionable.
+- **3:** Error reference exists. Some recovery guidance.
+- **2:** Error codes listed but recovery missing.
+- **1:** Vague error guidance.
+- **0:** No error reporting guidance.
+
+#### 4.3 Feedback Quality (doc-adjusted)
+- **4:** Well-organized with clear section hierarchy, summary sections, and progress checkpoints (e.g., step-by-step checklist).
+- **3:** Clear sections. User can follow a linear flow.
+- **2:** Readable but lacks clear structure or navigation aids.
+- **1:** Wall of text. Hard to locate specific information.
+- **0:** Disorganized, unusable as a reference.
+
+#### 4.4 Error Prevention (doc-adjusted)
+- **4:** Prerequisites clearly stated, common pitfalls documented, safe defaults recommended, destructive operations flagged with warnings.
+- **3:** Prerequisites and pitfalls covered. Some warnings.
+- **2:** Some warnings present but incomplete.
+- **1:** No warnings or prerequisites.
+- **0:** Misleading or dangerous instructions without caveats.
+
+#### 5.2 Forgiveness / Undo (doc-adjusted)
+- **4:** Version history, rollback instructions, or safe-fallback procedures documented. Agent knows how to reverse or recover.
+- **3:** Some recovery guidance. Version noted.
+- **2:** Version mentioned. No recovery guidance.
+- **1:** No version or recovery info.
+- **0:** Instructions encourage irreversible actions with no warning.
+
+#### 7.1 Modularity (doc-adjusted)
+- **4:** Logical sections (e.g., setup → core → advanced → troubleshooting). Layered references. Easy to navigate.
+- **3:** Clear sections. Some cross-referencing.
+- **2:** Sections exist but inconsistent depth or overlap.
+- **1:** Flat structure. Difficult to find specific topics.
+- **0:** Single monolithic blob.
+
+#### 7.2 Modifiability (doc-adjusted)
+- **4:** Section template is consistent. Adding a new topic follows a clear copy-paste pattern.
+- **3:** Consistent section format. Minor inconsistencies.
+- **2:** Can add content but section structure varies.
+- **1:** No clear pattern. Changes risk breaking document flow.
+- **0:** Effectively frozen — too fragile to modify.
+
+#### 7.3 Testability (doc-adjusted)
+- **4:** Dedicated testing reference with test strategies, examples, and verification steps.
+- **3:** Test strategies mentioned in the main doc or a testing reference exists.
+- **2:** Brief testing guidance.
+- **1:** Tests mentioned in passing.
+- **0:** No test guidance.
+
+---
+
 ## Scoring: 0–4 per criterion
 
 | Score | Meaning | Guideline |

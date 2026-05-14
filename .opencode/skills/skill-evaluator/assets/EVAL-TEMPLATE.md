@@ -5,6 +5,7 @@
 **Date:** YYYY-MM-DD
 **Evaluator:** [agent/human]
 **Skill version:** [version or commit]
+**Skill type:** [documentation-only | tool]
 **Automated score:** [run eval-skill.py and paste summary]
 
 ---
@@ -17,33 +18,36 @@
 
 ## Manual Assessment
 
+> **For documentation-only skills:** Criteria marked `[exempt]` are auto-scored 4.
+> Criteria marked `[adj]` use documentation-adjusted standards (see rubric.md).
+
 | # | Criterion | Score | Notes |
 |---|-----------|-------|-------|
 | 1.1 | Completeness | /4 | |
 | 1.2 | Correctness | /4 | |
 | 1.3 | Appropriateness | /4 | |
-| 2.1 | Fault Tolerance | /4 | |
-| 2.2 | Error Reporting | /4 | |
+| 2.1 | Fault Tolerance `[adj]` | /4 | |
+| 2.2 | Error Reporting `[adj]` | /4 | |
 | 2.3 | Recoverability | /4 | |
 | 3.1 | Token Cost | /4 | |
-| 3.2 | Execution Efficiency | /4 | |
+| 3.2 | Execution Efficiency `[exempt]` | /4 | |
 | 4.1 | Learnability | /4 | |
 | 4.2 | Consistency | /4 | |
-| 4.3 | Feedback Quality | /4 | |
-| 4.4 | Error Prevention | /4 | |
+| 4.3 | Feedback Quality `[adj]` | /4 | |
+| 4.4 | Error Prevention `[adj]` | /4 | |
 | 5.1 | Discoverability | /4 | |
-| 5.2 | Forgiveness | /4 | |
+| 5.2 | Forgiveness `[adj]` | /4 | |
 | 6.1 | Credential Handling | /4 | |
 | 6.2 | Input Validation | /4 | |
 | 6.3 | Data Safety | /4 | |
-| 7.1 | Modularity | /4 | |
-| 7.2 | Modifiability | /4 | |
-| 7.3 | Testability | /4 | |
+| 7.1 | Modularity `[adj]` | /4 | |
+| 7.2 | Modifiability `[adj]` | /4 | |
+| 7.3 | Testability `[adj]` | /4 | |
 | 8.1 | Trigger Precision | /4 | |
 | 8.2 | Progressive Disclosure | /4 | |
-| 8.3 | Composability | /4 | |
-| 8.4 | Idempotency | /4 | |
-| 8.5 | Escape Hatches | /4 | |
+| 8.3 | Composability `[exempt]` | /4 | |
+| 8.4 | Idempotency `[exempt]` | /4 | |
+| 8.5 | Escape Hatches `[exempt]` | /4 | |
 | | **TOTAL** | **/100** | |
 
 ## Priority Fixes
