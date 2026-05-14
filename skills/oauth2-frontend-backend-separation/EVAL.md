@@ -1,3 +1,88 @@
+---
+skillName: oauth2-frontend-backend-separation
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 88
+categoryScores:
+  functional-suitability: 12
+  reliability: 10
+  performance: 7
+  usability-ai: 14
+  usability-human: 7
+  security: 12
+  maintainability: 12
+  agent-specific: 14
+findings:
+  - id: F001
+    criterion: 3.1-token-cost
+    category: performance
+    score: 3
+    description: >-
+      SKILL.md is 257 lines, slightly over the 250-line guideline. 5 reference
+      files (792 lines) provide good progressive disclosure but main file is
+      slightly oversized.
+    priority: P1
+    suggestion: >-
+      Consider moving some content (e.g., Quick Reference table or expanded JWT
+      structure) to a reference file to reduce main file size below 250 lines.
+  - id: F002
+    criterion: 2.1-fault-tolerance
+    category: reliability
+    score: 3
+    description: >-
+      Error scenarios covered with recovery suggestions in references. PKCE
+      try-catch is minimal in main SKILL.md; pkce.md shows retry logic and
+      fallback handling but main doc doesn't summarize it.
+    priority: P1
+    suggestion: >-
+      Add a brief 2-3 line summary of the retry strategy (e.g., exponential
+      backoff) in the main SKILL.md error handling section.
+  - id: F003
+    criterion: 4.1-learnability
+    category: usability-ai
+    score: 3
+    description: >-
+      Token refresh flow is mentioned and linked but not explained in the main
+      SKILL.md. A brief 2-3 line summary of how refresh works would improve
+      cold-start learnability.
+    priority: P1
+    suggestion: >-
+      Add a brief inline summary of the token refresh mechanism in the 'Token
+      Refresh' section of SKILL.md (not just a link to
+      references/token-refresh.md).
+  - id: F004
+    criterion: 1.1-completeness
+    category: functional-suitability
+    score: 3
+    description: >-
+      Core OAuth2 flow well documented. Token refresh present in
+      references/token-refresh.md. Missing some advanced scenarios like
+      multi-tenant setup.
+    priority: P2
+    suggestion: 'If multi-tenant OAuth2 is out of scope, note this clearly in the SKILL.md.'
+  - id: F005
+    criterion: 5.1-discoverability
+    category: usability-human
+    score: 3
+    description: >-
+      SKILL.md is comprehensive and well-organized. --help not applicable to
+      documentation skill. Trigger description could include more trigger
+      contexts.
+    priority: P2
+    suggestion: >-
+      Consider adding more trigger contexts in the description (e.g., 'use when
+      setting up social login for SPA apps').
+summary: >-
+  Documentation-only skill for OAuth2 frontend-backend separation login.
+  Comprehensive coverage of flow, security (PKCE, JWT, stateless), and frontend
+  integration. Passes all automated checks (93%). Score 88/100 due to minor
+  token cost issue (257 lines vs 250 guideline) and 3 P1 suggestions for
+  improvement. No P0 findings. Approved for publishing.
+reviewedAt: '2026-05-14T00:00:00Z'
+reviewer: AI-Evaluator
+sourceCommit: null
+---
 # oauth2-frontend-backend-separation Evaluation
 
 **Date:** 2026-05-14
