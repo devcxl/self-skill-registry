@@ -405,6 +405,38 @@ def check_no_hardcoded_secrets(skill_path):
     return CheckResult("No hardcoded credentials or emails", CheckResult.PASS, category="security")
 
 
+@check("Skill type identified", "structure")
+def check_skill_type(skill_path):
+    """Detect if this is a documentation-only skill (no executable scripts)."""
+    EXECUTABLE_EXTS = {".py", ".js", ".sh", ".ts"}
+    scripts_dir = os.path.join(skill_path, "scripts")
+    if not os.path.isdir(scripts_dir):
+        return CheckResult("Skill type identified", CheckResult.PASS,
+                           "Documentation-only skill (no scripts/ directory)", category="structure")
+    exec_files = [f for f in os.listdir(scripts_dir)
+                  if os.path.splitext(f)[1] in EXECUTABLE_EXTS
+                  and not f.startswith(".")]
+    if exec_files:
+        return CheckResult("Skill type identified", CheckResult.PASS,
+                           f"Tool skill ({len(exec_files)} executable script(s) in scripts/)",
+                           category="structure")
+    return CheckResult("Skill type identified", CheckResult.PASS,
+                       "Documentation-only skill (no executable scripts in scripts/)",
+                       category="structure")
+
+
+def is_documentation_skill(skill_path):
+    """Return True if the skill has no executable scripts."""
+    EXECUTABLE_EXTS = {".py", ".js", ".sh", ".ts"}
+    scripts_dir = os.path.join(skill_path, "scripts")
+    if not os.path.isdir(scripts_dir):
+        return True
+    exec_files = [f for f in os.listdir(scripts_dir)
+                  if os.path.splitext(f)[1] in EXECUTABLE_EXTS
+                  and not f.startswith(".")]
+    return len(exec_files) == 0
+
+
 @check("Environment variables documented", "security")
 def check_env_vars_documented(skill_path):
     """If scripts reference os.environ, SKILL.md should document those vars."""
@@ -467,6 +499,7 @@ ALL_CHECKS = [
     check_skill_md_exists,
     check_frontmatter,
     check_name_matches_dir,
+    check_skill_type,
     check_no_extraneous,
     check_resource_dirs,
     check_description_length,
@@ -503,9 +536,13 @@ def print_report(results, skill_path, verbose=False):
         by_category.setdefault(r.category, []).append(r)
 
     skill_name = os.path.basename(os.path.abspath(skill_path))
+    is_doc = is_documentation_skill(skill_path)
+    skill_type = "Documentation-only" if is_doc else "Tool (has executable scripts)"
+
     print(f"\n📋 Skill Evaluation: {skill_name}")
     print(f"{'=' * 50}")
     print(f"Path: {os.path.abspath(skill_path)}")
+    print(f"Type: {skill_type}")
     print()
 
     icons = {CheckResult.PASS: "✅", CheckResult.WARN: "⚠️ ", CheckResult.FAIL: "❌"}
@@ -531,6 +568,13 @@ def print_report(results, skill_path, verbose=False):
     score = counts[CheckResult.PASS] / total * 100 if total else 0
     print(f"  Structural score: {score:.0f}% ({counts[CheckResult.PASS]}/{total} checks passed)")
     print()
+
+    if is_doc:
+        print("  ⓘ  Documentation-only skill detected (no executable scripts).")
+        print("     When scoring manually, criteria 3.2, 8.3, 8.4, 8.5 are auto-exempt (score 4).")
+        print("     Criteria 2.1, 2.2, 4.3, 4.4, 5.2, 7.1, 7.2, 7.3 use documentation-adjusted standards.")
+        print("     See rubric.md § Documentation-Only Skills for details.")
+
     print("  ⓘ  This covers automated/structural checks only.")
     print("     For the full evaluation, use the manual rubric in references/rubric.md")
     print()
@@ -553,6 +597,7 @@ def main():
         output = {
             "skill": os.path.basename(os.path.abspath(args.path)),
             "path": os.path.abspath(args.path),
+            "skillType": "documentation" if is_documentation_skill(args.path) else "tool",
             "checks": [r.to_dict() for r in results],
             "summary": {
                 "pass": sum(1 for r in results if r.status == CheckResult.PASS),

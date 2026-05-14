@@ -86,26 +86,7 @@ public class SecurityConfig {
 
 ### Cookie存储OAuth状态
 
-```java
-public class HttpCookieOAuth2AuthorizationRequestRepository
-    implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
-
-    // 使用Cookie存储而非Session，实现无状态
-    public static final String REDIRECT_URI_PARAM_COOKIE_NAME = "redirect_uri";
-
-    @Override
-    public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        return null; // Cookie实现
-    }
-
-    @Override
-    public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest,
-                                        HttpServletRequest request,
-                                        HttpServletResponse response) {
-        // 保存到Cookie
-    }
-}
-```
+使用 `HttpCookieOAuth2AuthorizationRequestRepository` 将 `redirect_uri` 和授权请求状态保存到 Cookie（而非 Session），实现无状态架构。需实现 `AuthorizationRequestRepository` 接口的 `loadAuthorizationRequest` 和 `saveAuthorizationRequest` 方法。
 
 ### OAuth2AuthenticationSuccessHandler
 
@@ -184,19 +165,12 @@ const loginWithGoogle = () => {
   const redirectUri = encodeURIComponent(window.location.origin + '/callback');
   window.location.href = `https://api.example.com/oauth2/authorize/google?redirect_uri=${redirectUri}`;
 };
-
-// 或携带更多参数
-const loginWithGoogle = (extraParams) => {
-  const redirectUri = encodeURIComponent(window.location.origin + '/callback');
-  const state = btoa(JSON.stringify(extraParams));
-  window.location.href = `https://api.example.com/oauth2/authorize/google?redirect_uri=${redirectUri}&state=${state}`;
-};
 ```
 
 ### 2. 接收Token并存储
 
 ```javascript
-// callback页面：从URL提取token
+// callback页面：从URL提取token，处理错误场景
 const handleOAuthCallback = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
@@ -207,45 +181,40 @@ const handleOAuthCallback = () => {
     router.push('/home');
   } else {
     const error = urlParams.get('error');
-    console.error('OAuth error:', error);
+    const errorDesc = urlParams.get('error_description');
+    console.error(`OAuth error: ${error} - ${errorDesc}`);
+    switch (error) {
+      case 'access_denied':
+        router.push('/login?error=cancelled');
+        break;
+      case 'server_error':
+        router.push('/login?error=provider_unavailable');
+        break;
+      default:
+        router.push('/login?error=unknown');
+    }
   }
 };
 ```
 
-### 3. 请求时携带Token
+错误码详情见 [references/error-codes.md](references/error-codes.md)。
 
-```javascript
-// Axios拦截器
-axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-```
+### 3. 自动刷新Token
 
-## User Creation Flow
+前端使用 Axios 拦截器实现自动 Token 刷新（包括并发请求排队），详见 [references/token-refresh.md](references/token-refresh.md)。
+
+## User Creation / Lookup
+
+OAuth 登录后通过 email + provider 查找已有用户；若不存在则自动创建。参见 [references/providers.md](references/providers.md) 了解各 Provider 的用户信息适配器实现。
 
 ```java
-@Service
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
-
-    private OAuth2User processOAuth2User(OAuth2UserRequest oAuth2UserRequest,
-                                         Map<String, Object> userAttributes) {
-        OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
-            oAuth2UserRequest.getClientRegistration().getRegistrationId(),
-            userAttributes);
-
-        AccountInfoDto user = accountInfoMapper.getByAccount(oAuth2UserInfo.getEmail(), null);
-
-        if (user == null) {
-            user = generatorUserFromOAuth2UserInfo(oAuth2UserInfo, source);
-        }
-
-        return UserPrincipal.create(user, userAttributes);
-    }
+OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
+    registrationId, userAttributes);
+AccountInfoDto user = accountInfoMapper.getByAccount(oAuth2UserInfo.getEmail(), null);
+if (user == null) {
+    user = generatorUserFromOAuth2UserInfo(oAuth2UserInfo, source);
 }
+return UserPrincipal.create(user, userAttributes);
 ```
 
 ## JWT Token结构
@@ -261,6 +230,10 @@ public String createToken(Authentication authentication) {
 }
 ```
 
+## Token Refresh
+
+JWT 过期后使用双 Token 模式（Access Token + Refresh Token）实现无感知续期。Refresh Token 可滚动更新并通过 Redis 黑名单实现安全撤销。完整的前后端刷新流程见 [references/token-refresh.md](references/token-refresh.md)。
+
 ## Quick Reference
 
 | Component | File | Purpose |
@@ -275,6 +248,10 @@ public String createToken(Authentication authentication) {
 | Token Refresh | references/token-refresh.md | 刷新Token流程 |
 | Testing | references/testing.md | 测试策略 |
 
+## Testing Strategy
+
+OAuth2 集成测试分为三层：单元测试（JWT Provider、用户服务）、集成测试（Spring MockMvc + OAuth mock）、E2E 测试（Playwright + mock OAuth provider）。详见 [references/testing.md](references/testing.md)。
+
 ## Common Mistakes
 
 1. **redirect_uri校验过严**：只校验host:port，允许前端使用不同路径
@@ -282,6 +259,13 @@ public String createToken(Authentication authentication) {
 3. **Token放Cookie而非URL**：部分浏览器限制第三方Cookie
 4. **未清理URL参数**：callback后token残留在浏览器历史
 5. **缺少PKCE**：生产环境应该启用PKCE防授权码截获
+
+## Recovery from Failed Flows
+
+- **网络超时**：使用指数退避重试（参见 [token-refresh.md](references/token-refresh.md) 的自动刷新逻辑）
+- **授权码无效**：重新发起授权请求，清除 Cookie 中的过期 state
+- **State 不匹配**：清理 Cookie，引导用户重新登录
+- **用户已存在但 Provider 不同**：提供账号绑定流程
 
 ## Security Checklist
 

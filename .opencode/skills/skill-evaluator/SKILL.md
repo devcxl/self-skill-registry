@@ -138,13 +138,14 @@ Also write `artifacts/skill-review.json` following the schema above.
 
 ## Evaluation Process
 
-1. **Run `eval-skill.py`** — get the automated structural score
+1. **Run `eval-skill.py`** — get the automated structural score and determine skill type (tool vs. documentation-only)
 2. **Read the skill's SKILL.md** — understand what it does
-3. **Read/skim the scripts** — assess code quality, error handling, testability
-4. **Score each manual criterion** using [references/rubric.md](references/rubric.md) — concrete criteria per level
-5. **Prioritize findings** as P0 (blocks publishing) / P1 (should fix) / P2 (nice to have)
-6. **Write EVAL.md** in the skill directory with scores + findings
-7. **Write skill-review.json** in the artifacts directory
+3. **Determine skill type** — If the skill has no executable scripts (`scripts/` empty or absent), apply the **Document-Only Adjustments** in [references/rubric.md](references/rubric.md). Auto-exempt criteria 3.2, 8.3, 8.4, 8.5 (score 4 each). Use adjusted standards for 2.1, 2.2, 4.3, 4.4, 5.2, 7.1, 7.2, 7.3.
+4. **Read/skim the scripts** — assess code quality, error handling, testability (skip for doc-only skills)
+5. **Score each manual criterion** using [references/rubric.md](references/rubric.md) — concrete criteria per level
+6. **Prioritize findings** as P0 (blocks publishing) / P1 (should fix) / P2 (nice to have)
+7. **Write EVAL.md** in the skill directory with scores + findings
+8. **Write skill-review.json** in the artifacts directory
 
 ## Categories (8 categories, 25 criteria)
 
