@@ -11,6 +11,7 @@
 | Worker name | `skill-registry-staging` | `skill-registry-production` |
 | D1 database | `skill-registry-staging` | `skill-registry-production` |
 | R2 bucket | `skill-registry-packages-staging` | `skill-registry-packages-production` |
+| KV namespace | `AUTH_CACHE` | `AUTH_CACHE` |
 | 触发条件 | push to main | Git tag (e.g. `v1.0.0`) |
 
 ## 首次部署
@@ -56,7 +57,7 @@ wrangler d1 list
 wrangler d1 execute skill-registry-staging --remote --env staging --command="SELECT 1"
 ```
 
-### 4. 初始化 D1 schema
+### 5. 初始化 D1 schema
 
 ```bash
 # Staging
@@ -66,7 +67,7 @@ wrangler d1 execute skill-registry-staging --remote --file=db/schema.sql
 wrangler d1 execute skill-registry-production --remote --file=db/schema.sql
 ```
 
-### 5. 创建 R2 bucket
+### 6. 创建 R2 bucket
 
 ```bash
 # Staging
@@ -76,7 +77,21 @@ wrangler r2 bucket create skill-registry-packages-staging
 wrangler r2 bucket create skill-registry-packages-production
 ```
 
-### 6. 部署 Worker
+### 7. 创建 KV namespace
+
+`AUTH_CACHE` 用于保存 OAuth state、PKCE verifier 和 Web session。它是 GitHub 登录必需的运行时依赖。
+
+```bash
+# Staging
+wrangler kv namespace create AUTH_CACHE --env staging
+# 复制输出的 id，更新 apps/worker/wrangler.toml 中 [[env.staging.kv_namespaces]] 的 id
+
+# Production
+wrangler kv namespace create AUTH_CACHE --env production
+# 复制输出的 id，更新 apps/worker/wrangler.toml 中 [[env.production.kv_namespaces]] 的 id
+```
+
+### 8. 部署 Worker
 
 ```bash
 # Staging
