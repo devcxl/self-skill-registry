@@ -1,6 +1,11 @@
 ---
 name: nodejs-cli-aur-packager
-description: 'Package published npm CLI tools into Arch Linux AUR packages with reproducible npm tarball builds. Use when creating or updating PKGBUILD/.SRCINFO for a Node.js or TypeScript command-line package already published to npm, computing sha256 for npm tarballs, inspecting bin entries and postinstall scripts, generating wrapper scripts, or running makepkg verification. Triggers include: “把 npm CLI 打包成 AUR”, “为 npm 包生成 PKGBUILD”, “update AUR package for Node.js CLI”, “生成 .SRCINFO”, “compute sha256 for npm tarball”.'
+description: 'Package published npm CLI tools into Arch Linux AUR packages with reproducible npm tarball builds. Use when creating or updating PKGBUILD/.SRCINFO for a Node.js or TypeScript command-line package already published to npm, computing sha256 for npm tarballs, inspecting bin entries and postinstall scripts, generating wrapper scripts, or running makepkg verification. Triggers include: \u201c把 npm CLI 打包成 AUR\u201d, \u201c为 npm 包生成 PKGBUILD\u201d, \u201cupdate AUR package for Node.js CLI\u201d, \u201c生成 .SRCINFO\u201d, \u201ccompute sha256 for npm tarball\u201d.'
+version: 1.0.0
+compatibility:
+  - opencode
+  - claude-code
+  - codex
 ---
 
 # Node.js CLI → AUR 打包
