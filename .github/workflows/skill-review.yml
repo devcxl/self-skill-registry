@@ -6,11 +6,6 @@ on:
     paths:
       - 'skills/**'
       - '.opencode/skills/skill-evaluator/**'
-    paths-ignore:
-      # EVAL.md is written by the review bot itself; its commits must NOT
-      # re-trigger this workflow (otherwise: duplicate runs, merge-base
-      # failures, and approval-required runs from bot pushes).
-      - 'skills/**/EVAL.md'
 
 permissions:
   contents: read
@@ -41,7 +36,21 @@ jobs:
         run: npm run build
 
       - name: Find changed skill (must be exactly one)
+        id: find-skills
         run: |
+          # The review bot auto-commits EVAL.md after a review; such commits
+          # re-trigger this workflow. Detect them here and skip the whole
+          # review (no AI call, no duplicate comment) instead of failing.
+          # Note: check the HEAD commit's own changes — the PR-wide diff is
+          # cumulative and always contains the author's SKILL.md.
+          HEAD_FILES=$(git diff-tree --name-only -r --no-commit-id HEAD 2>/dev/null || true)
+          NON_EVAL=$(echo "$HEAD_FILES" | grep -v '^skills/.*/EVAL.md$' || true)
+          if [ -z "$NON_EVAL" ] && [ -n "$HEAD_FILES" ]; then
+            echo "🟢 HEAD 仅改 review 产物(EVAL.md) — bot 自动提交，跳过 review"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           # No `| tail` here: the script exits 1 on failure and that exit code
           # must propagate (a pipe would mask it without pipefail).
           SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}")
@@ -65,6 +74,7 @@ jobs:
         run: mkdir -p artifacts
 
       - name: Run AI review (OpenCode)
+        if: steps.find-skills.outputs.skip != 'true'
         uses: anomalyco/opencode/github@latest
         with:
           model: opencode-go/deepseek-v4-flash
@@ -80,9 +90,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Verify review artifacts (EVAL.md + skill-review.json + schema)
+        if: steps.find-skills.outputs.skip != 'true'
         run: npx tsx scripts/verify-review-artifacts.ts "$SKILL"
 
       - name: Check review status
+        if: steps.find-skills.outputs.skip != 'true'
         id: check-status
         run: |
           STATUS=$(npx tsx scripts/check-review-status.ts artifacts/skill-review.json)
@@ -101,11 +113,12 @@ jobs:
           fi
 
       - name: Sync structured review into EVAL.md front matter
-        if: steps.check-status.outputs.status != 'rejected'
+        if: steps.find-skills.outputs.skip != 'true' && steps.check-status.outputs.status != 'rejected'
         run: |
           npx tsx scripts/sync-review-frontmatter.ts "skills/${SKILL}/EVAL.md" artifacts/skill-review.json
 
       - name: Commit EVAL artifacts to PR
+        if: steps.find-skills.outputs.skip != 'true'
         run: |
           EVAL_PATH="skills/${SKILL}/EVAL.md"
 
@@ -127,7 +140,7 @@ jobs:
           fi
 
       - name: Post review status comment
-        if: always()
+        if: always() && steps.find-skills.outputs.skip != 'true'
         run: npx tsx scripts/post-review-comment.ts
         env:
           REVIEW_STATUS: ${{ steps.check-status.outputs.status }}
