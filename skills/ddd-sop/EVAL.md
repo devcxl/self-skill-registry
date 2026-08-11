@@ -1,110 +1,3 @@
----
-skillName: ddd-sop
-skillVersion: 1.0.0
-reviewStatus: approved
-needsManualReview: false
-totalScore: 95
-categoryScores:
-  functional-suitability: 12
-  reliability: 10
-  performance: 7
-  usability-ai: 16
-  usability-human: 7
-  security: 12
-  maintainability: 12
-  agent-specific: 19
-findings:
-  - id: F001
-    criterion: error-reporting
-    category: reliability
-    score: 3
-    description: >-
-      dev-checklist documents forbidden patterns with correct replacements and
-      the requirement template enumerates exception scenarios
-      (重复回调/金额不一致/回调乱序/消息发送失败), but there is no structured error/troubleshooting
-      reference with per-error recovery steps.
-    priority: P2
-    suggestion: >-
-      Add a troubleshooting section or reference file mapping each exception
-      scenario to explicit recovery/retry/compensation steps.
-  - id: F002
-    criterion: fault-tolerance
-    category: reliability
-    score: 3
-    description: >-
-      Exception branches are marked during event storming and idempotency is
-      covered in the dev checklist, but recovery/retry strategy detail for
-      out-of-order or failed messages is not explicit in the consistency design.
-    priority: P2
-    suggestion: >-
-      Document explicit strategies for message ordering, retries, and
-      compensation in the consistency design phase.
-  - id: F003
-    criterion: token-cost
-    category: performance
-    score: 3
-    description: >-
-      SKILL.md body is 233 lines (within the 150-250 band) but the '每个需求的开发流程'
-      section substantially duplicates content already in
-      references/dev-checklist.md.
-    priority: P2
-    suggestion: >-
-      Replace the duplicated checklist with a pointer-style reference to
-      dev-checklist.md to reduce token load.
-  - id: F004
-    criterion: forgiveness
-    category: usability-human
-    score: 3
-    description: >-
-      Version 1.0.0 is documented, but there is no rollback or version-migration
-      guidance for generated docs/ artifacts.
-    priority: P2
-    suggestion: >-
-      Add a note on how to handle/rollback artifacts when the SOP version
-      changes.
-  - id: F005
-    criterion: trigger-precision
-    category: agent-specific
-    score: 3
-    description: >-
-      The Chinese description contains rich trigger contexts (DDD
-      落地、领域模型、限界上下文、业务用例、SOP), but overlaps with the sibling domain-modeling
-      skill on 限界上下文/统一语言 topics, creating false-trigger risk.
-    priority: P1
-    suggestion: >-
-      Clarify the boundary in the description, e.g., emphasize '完整落地流程/SOP' and
-      add exclusion phrases for pure glossary-maintenance tasks handled by
-      domain-modeling.
-  - id: F006
-    criterion: testability
-    category: maintainability
-    score: 4
-    description: >-
-      This initial review found no pre-existing behavior-verification test cases
-      in EVAL.md. 5 test cases (2 positive, 1 negative, 2 boundary) have been
-      written in the Behavior Verification section and must be executed in a
-      live agent session and backfilled.
-    priority: P1
-    suggestion: >-
-      Run the provided test cases in CI/manual review; the deterministic [D]
-      case T002 can be automated.
-summary: >-
-  ddd-sop is a high-quality documentation-only skill delivering a complete DDD
-  landing SOP (business goals → event storming → bounded contexts → ubiquitous
-  language → aggregates → use cases → consistency → layered implementation →
-  quality gates) with 5 well-linked reference files. Automated checks pass
-  12/14; the two trigger failures are false negatives caused by CJK text in
-  eval-skill.py's whitespace-based word count and English-only trigger-phrase
-  scan, not actual defects. DDD guidance is technically correct, content is
-  comprehensive and consistent, security is clean (no scripts, no credentials,
-  docs-only). Score 95/100 with no P0 blockers. Minor improvements recommended:
-  structured error reference, trigger-boundary clarification vs domain-modeling,
-  token trimming of duplicated checklist, and executing the newly added
-  behavior-verification test cases.
-reviewedAt: '2026-08-11T11:15:51Z'
-reviewer: AI-Evaluator
-sourceCommit: 5467ad61eb4953b645f6a7dfdcd07b494cd241b3
----
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # ddd-sop Evaluation
@@ -184,7 +77,7 @@ Type: Documentation-only
 | 6.3 | Data Safety | 4/4 | Only creates documentation files, lazily. No destructive operations. |
 | 7.1 | Modularity `[adj]` | 4/4 | Clean layering: SKILL.md (SOP flow) + 5 focused references (structure / module / checklist / examples / template). Easy to navigate. |
 | 7.2 | Modifiability `[adj]` | 4/4 | Consistent section pattern; adding a new phase or reference follows a clear copy-paste-modify pattern. |
-| 7.3 | Testability `[adj]` | 4/4 | Strong test guidance: dev-checklist mandates "用什么测试证明规则正确", coding order starts with 领域测试, requirement-template includes 验收测试 lists. |
+| 7.3 | Testability `[adj]` | 4/4 | Strong test guidance: dev-checklist mandates "用什么测试证明规则正确", coding order starts with 领域测试, requirement-template includes 验收测试 lists. EVAL.md now carries 5 behavior-verification test cases. |
 | 8.1 | Trigger Precision | 3/4 | Description is specific with clear trigger contexts (DDD 落地、领域模型、限界上下文、用例、SOP). Some overlap ambiguity with the sibling `domain-modeling` skill on 限界上下文/统一语言 topics. |
 | 8.2 | Progressive Disclosure | 4/4 | 3 levels: description → SKILL.md → 5 reference files. Agent loads only what each phase needs. |
 | 8.3 | Composability `[exempt]` | 4/4 | No pipeline to compose. |
@@ -238,7 +131,7 @@ Type: Documentation-only
 | 边界 | 2 | — | — |
 | **总计** | 5 | — | — |
 
-> ⬜ 待执行：本初审未在 live agent 会话中执行上述用例。T002 的 `[D]` 用例可纳入后续 CI 行为验证。
+> ⬜ 待执行：本评审未在 live agent 会话中执行上述用例。静态核对确认 T002 的预期字段（所属上下文/业务规则/聚合/状态变化/领域事件/验收测试）在 `references/requirement-template.md` 中全部存在；T001 的预期流程（business-goals → event-storming → context-map）与 SKILL.md 步骤 1–3 一致。T002 的 `[D]` 用例可纳入后续 CI 行为验证。
 
 **风险标记**：
 - 正向通过率 < 100% → **P0**：核心功能不可用
@@ -251,7 +144,7 @@ Type: Documentation-only
 None.
 
 ### P1 — Should Fix
-1. **Behavior Verification (F006)**：初审时 EVAL.md 无既有测试用例；本评审已补充 5 条用例（2 正向 + 1 负向 + 2 边界），需在 CI 或人工会话中执行并回填验证结果。
+1. **Behavior Verification (F006)**：初审时 EVAL.md 无既有测试用例；已补充 5 条用例（2 正向 + 1 负向 + 2 边界），需在 CI 或人工会话中执行并回填验证结果。
 2. **Trigger Precision (F005)**：与 `domain-modeling` skill 在"限界上下文/统一语言"场景存在触发重叠。建议在 description 中补充排除语境（如"完整落地流程 / SOP"），降低误触发。
 
 ### P2 — Nice to Have
