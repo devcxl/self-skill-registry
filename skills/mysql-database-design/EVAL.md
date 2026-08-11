@@ -1,3 +1,111 @@
+---
+skillName: mysql-database-design
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 89
+categoryScores:
+  functional-suitability: 11
+  reliability: 8
+  performance: 7
+  usability-ai: 16
+  usability-human: 6
+  security: 12
+  maintainability: 11
+  agent-specific: 18
+findings:
+  - id: F001
+    criterion: 8.1-trigger-precision
+    category: agent-specific
+    score: 3
+    description: >-
+      Description is Chinese-only. Semantically precise (「当…时使用」 = 'Use when'),
+      but no English trigger keywords, reducing reliability for English-language
+      agents. The automated 'Description length adequate' check fails because
+      CJK text has no whitespace and split() counts 3 'words' — a checker
+      artifact, not a real defect.
+    priority: P2
+    suggestion: >-
+      Append an English trigger phrase or keyword list, e.g. 'Use when
+      designing, reviewing, or optimizing MySQL table structures / schemas /
+      indexes'.
+  - id: F002
+    criterion: 2.2-error-reporting
+    category: reliability
+    score: 2
+    description: >-
+      No troubleshooting or error-reference content. Common MySQL design
+      failures (unique-key conflicts, unused indexes revealed by EXPLAIN, wrong
+      composite-index order, lock waits/deadlocks tied to indexes) are not
+      covered with actionable guidance.
+    priority: P1
+    suggestion: >-
+      Add a troubleshooting section listing common failure scenarios and
+      concrete resolution steps.
+  - id: F003
+    criterion: 5.2-forgiveness
+    category: usability-human
+    score: 2
+    description: >-
+      Version is present in frontmatter but no rollback/recovery guidance exists
+      for applying these conventions to an existing schema (ALTER TABLE,
+      migration strategy, revert path).
+    priority: P2
+    suggestion: >-
+      Add a short section on evolving existing tables (ALTER / migrations /
+      rollback) rather than only new-table templates.
+  - id: F004
+    criterion: 1.2-correctness
+    category: functional-suitability
+    score: 3
+    description: >-
+      DDL examples are valid, but the unconditional recommendation of
+      timestamp(6) for business time fields omits the MySQL timestamp 2038-year
+      range and timezone behavior, and when datetime(6) would be preferable.
+    priority: P2
+    suggestion: >-
+      Document the timestamp vs datetime(6) trade-off and justify the
+      timestamp(6) default.
+  - id: F005
+    criterion: 7.3-testability
+    category: maintainability
+    score: 3
+    description: >-
+      The skill advises EXPLAIN-based validation but provides no dedicated
+      verification/test reference (field checklist, SQL syntax check, EXPLAIN
+      self-check list).
+    priority: P2
+    suggestion: >-
+      Add a verification checklist section covering mandatory fields and EXPLAIN
+      review points.
+  - id: F006
+    criterion: behavior-verification
+    category: maintainability
+    score: 0
+    description: >-
+      Initial review: the skill ships with no behavior-verification test cases.
+      Evaluator has drafted 5 cases (T001-T005, 2 positive / 1 negative / 2
+      boundary) in EVAL.md; they must be executed and results backfilled during
+      re-review.
+    priority: P1
+    suggestion: >-
+      Author confirms or replaces T001-T005; CI re-review executes them and
+      enforces positive 100% / negative 100% / boundary >=50%.
+summary: >-
+  mysql-database-design 1.0.0 is a well-structured, documentation-only MySQL
+  schema-design skill. It delivers consistent conventions for
+  fixed/status/soft-delete/time fields, unique constraints and composite
+  indexes, a worked t_order example, a blank template, quick-start steps, and
+  explicit caveats. No scripts, no external dependencies, no credentials, no
+  destructive operations. Automated structural score 86%; the single automated
+  FAIL is a CJK word-count artifact of the checker, not a real defect. Manual
+  rubric total 89/100. No P0 findings; no manual-review triggers. Approved —
+  publishable after addressing P1 items (test-case execution and a
+  troubleshooting section).
+reviewedAt: '2026-08-11T11:20:00Z'
+reviewer: AI-Evaluator
+sourceCommit: 7416763d761799b97fa311526d372d0cf0d59b72
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # mysql-database-design Evaluation
