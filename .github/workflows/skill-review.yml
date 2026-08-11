@@ -8,24 +8,26 @@ on:
       - '.opencode/skills/skill-evaluator/**'
 
 permissions:
-  contents: write
-  pull-requests: read
-  issues: read
+  contents: read
 
 jobs:
-  # ── TS Pre-check ──────────────────────────────────────────────────
-  precheck:
+  review:
     runs-on: ubuntu-latest
-    outputs:
-      changed-skills: ${{ steps.find-skills.outputs.skills }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch full history so git diff can reference base branch
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -33,37 +35,10 @@ jobs:
       - name: Build workspace
         run: npm run build
 
-      - name: Find changed skills
-        id: find-skills
+      - name: Find changed skill (must be exactly one)
         run: |
-          # Fetch base branch to ensure it's available for diff
-          git fetch origin ${{ github.base_ref }} --depth=1
-
-          # Get list of changed directories under skills/
-          SKILLS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
-            grep '^skills/' | \
-            cut -d'/' -f2 | \
-            sort -u | \
-            grep -v '^$')
-          echo "skills=$SKILLS" >> $GITHUB_OUTPUT
-          echo "Found changed skills: $SKILLS"
-
-      - name: Validate single skill per PR
-        run: |
-          SKILLS="${{ steps.find-skills.outputs.skills }}"
-          # Use grep to count non-empty lines (handles empty SKILLS correctly)
-          COUNT=$(echo "$SKILLS" | grep -c . || true)
-          if [ "$COUNT" -gt 1 ]; then
-            echo "❌ Multiple skills changed in this PR: $SKILLS"
-            echo "Each PR must contain exactly ONE skill change."
-            exit 1
-          fi
-          if [ "$COUNT" -eq 0 ] || [ -z "$SKILLS" ]; then
-            echo "No skill changes detected in skills/ directory."
-            echo "Make sure your PR adds files under skills/<name>/"
-            exit 1
-          fi
-          echo "✅ Single skill PR: $SKILLS"
+          SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}")
+          echo "SKILL=$SKILL" >> "$GITHUB_ENV"
 
       - name: Run TS pre-check (validate + security)
         run: |
@@ -74,32 +49,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # ── AI Review ─────────────────────────────────────────────────────
-  review:
-    needs: precheck
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build workspace
-        run: npm run build
-
-      - name: Configure git identity
+      - name: Configure git identity (for OpenCode)
         run: |
           git config user.name "skill-review[bot]"
           git config user.email "skill-review[bot]@users.noreply.github.com"
@@ -122,42 +72,15 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Verify EVAL.md exists
-        run: |
-          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
-          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
-          EVAL_PATH="skills/${SKILL}/EVAL.md"
-          if [ ! -f "$EVAL_PATH" ]; then
-            echo "❌ EVAL.md not found at $EVAL_PATH"
-            exit 1
-          fi
-          echo "✅ EVAL.md found at $EVAL_PATH"
-
-      - name: Verify skill-review.json exists
-        run: |
-          if [ ! -f "artifacts/skill-review.json" ]; then
-            echo "❌ skill-review.json not found at artifacts/skill-review.json"
-            exit 1
-          fi
-          echo "✅ skill-review.json found"
-
-      - name: Validate review JSON schema
-        run: |
-          npx tsx scripts/validate-review-report.ts artifacts/skill-review.json
+      - name: Verify review artifacts (EVAL.md + skill-review.json + schema)
+        run: npx tsx scripts/verify-review-artifacts.ts "$SKILL"
 
       - name: Check review status
         id: check-status
         run: |
-          STATUS=$(node -e "
-            const fs = require('node:fs');
-            const data = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
-            process.stdout.write(data.reviewStatus);
-          ")
+          STATUS=$(npx tsx scripts/check-review-status.ts artifacts/skill-review.json)
           echo "Review status: $STATUS"
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
-
-          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
-          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
 
           if [ "$STATUS" = "rejected" ]; then
             echo "❌ Skill rejected by AI review. See EVAL.md for details."
@@ -173,15 +96,10 @@ jobs:
       - name: Sync structured review into EVAL.md front matter
         if: steps.check-status.outputs.status != 'rejected'
         run: |
-          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
-          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
-          EVAL_PATH="skills/${SKILL}/EVAL.md"
-          npx tsx scripts/sync-review-frontmatter.ts "$EVAL_PATH" artifacts/skill-review.json
+          npx tsx scripts/sync-review-frontmatter.ts "skills/${SKILL}/EVAL.md" artifacts/skill-review.json
 
       - name: Commit EVAL artifacts to PR
         run: |
-          SKILLS="${{ needs.precheck.outputs.changed-skills }}"
-          SKILL=$(echo "$SKILLS" | cut -d',' -f1)
           EVAL_PATH="skills/${SKILL}/EVAL.md"
 
           if [ ! -f "$EVAL_PATH" ]; then
@@ -203,40 +121,8 @@ jobs:
 
       - name: Post review status comment
         if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const status = process.env.REVIEW_STATUS || 'workflow_error';
-            const emoji = status === 'approved' ? '✅' : status === 'rejected' ? '❌' : '⚠️';
-            
-            let body = `${emoji} **AI Skill Review: ${status}**\n\n`;
-            
-            try {
-              const summary = JSON.parse(fs.readFileSync('artifacts/skill-review.json', 'utf8'));
-              body += `**Score:** ${summary.totalScore}/100\n\n`;
-              body += `**Summary:** ${summary.summary}\n\n`;
-              if (summary.findings && summary.findings.length > 0) {
-                body += `### Findings (${summary.findings.length})\n`;
-                for (const f of summary.findings.slice(0, 10)) {
-                  body += `- **${f.priority}** [${f.criterion}] ${f.description}\n`;
-                }
-              }
-            } catch {
-              body += 'OpenCode review did not produce artifacts/skill-review.json. This usually means an upstream workflow error occurred before the report was generated (for example: permission checks, token mode mismatch, or action runtime failure).\n';
-            }
-
-            if (status === 'rejected') {
-              body += '\n> 🚫 **This skill is rejected and cannot be merged.** Fix the issues above and resubmit.';
-            } else if (status === 'needs_manual_review') {
-              body += '\n> ⚠️ **This skill requires manual admin review.** An administrator must approve before publishing.';
-            }
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body
-            });
+        run: npx tsx scripts/post-review-comment.ts
         env:
           REVIEW_STATUS: ${{ steps.check-status.outputs.status }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
