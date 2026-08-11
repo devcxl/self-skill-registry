@@ -1,3 +1,96 @@
+---
+skillName: codegraph-code-search
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 94
+categoryScores:
+  functional-suitability: 11
+  reliability: 11
+  performance: 7
+  usability-ai: 16
+  usability-human: 7
+  security: 12
+  maintainability: 10
+  agent-specific: 20
+findings:
+  - id: F001
+    criterion: testability
+    category: maintainability
+    score: 2
+    description: >-
+      No dedicated testing strategy or reference, and behavior verification
+      could not be executed in the CI sandbox because the CodeGraph CLI and a
+      .codegraph/ index are not available. The 5 proposed test cases in EVAL.md
+      remain unverified.
+    priority: P1
+    suggestion: >-
+      Run the 5 behavior-verification test cases against a real repository with
+      a CodeGraph index, or add a lightweight harness using `codegraph
+      status`/`codegraph --help` output.
+  - id: F002
+    criterion: error-reporting
+    category: reliability
+    score: 3
+    description: >-
+      Failure handling is a well-ordered 6-step checklist but lacks a structured
+      per-symptom error reference table.
+    priority: P2
+    suggestion: >-
+      Add a symptom → command → action table (e.g., 'results stale' → codegraph
+      sync; 'stale lock' → codegraph unlock) for direct troubleshooting.
+  - id: F003
+    criterion: token-cost
+    category: performance
+    score: 3
+    description: >-
+      SKILL.md is 193 lines (184 body), within the 150-250 acceptable band, but
+      search-workflow examples add length.
+    priority: P2
+    suggestion: >-
+      Trim workflow examples or move them into references/cli-reference.md to
+      keep the core SKILL.md near ~150 lines.
+  - id: F004
+    criterion: trigger-precision
+    category: agent-specific
+    score: 4
+    description: >-
+      Description is precise and well-bounded (specific actions + explicit 'when
+      not to use' boundary), but automated trigger detection flags it because
+      the phrasing is 'Use it when' rather than 'Use when'.
+    priority: P2
+    suggestion: >-
+      Rephrase 'Use it when locating symbols' to 'Use when locating symbols' to
+      satisfy automated trigger checks.
+  - id: F005
+    criterion: correctness
+    category: functional-suitability
+    score: 3
+    description: >-
+      Commands and flags appear consistent with cited CodeGraph docs and are
+      internally consistent, but could not be executed-verified in CI (no
+      codegraph binary installed).
+    priority: P2
+    suggestion: >-
+      Verify key command flags (query --kind, files --filter, affected --stdin)
+      against a live `codegraph help` in a real environment.
+summary: >-
+  Skill 'codegraph-code-search' is a well-structured documentation-only skill
+  for using the CodeGraph CLI as a structural code-search and navigation tool.
+  It provides comprehensive command selection guidance
+  (explore/query/node/callers/callees/impact/files/affected/status), an ordered
+  failure-handling checklist, freshness and correctness caveats, a clear 'when
+  not to use' boundary versus text search, and an excellent 3-level progressive
+  disclosure (description → SKILL.md → references/cli-reference.md). All
+  automated checks pass except two warnings (extraneous README.md,
+  trigger-phrase detection). Score 94/100 with no P0 blockers. The primary gap
+  is behavioral verification, which requires a real CodeGraph environment and
+  was not executable in CI (P1); remaining items are P2 polish. Skill is
+  approved for publishing.
+reviewedAt: '2026-08-11T11:15:34Z'
+reviewer: AI-Evaluator
+sourceCommit: 826352441564c27b58139a41444799a36943fe96
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # codegraph-code-search Evaluation
