@@ -6,6 +6,11 @@ on:
     paths:
       - 'skills/**'
       - '.opencode/skills/skill-evaluator/**'
+    paths-ignore:
+      # EVAL.md is written by the review bot itself; its commits must NOT
+      # re-trigger this workflow (otherwise: duplicate runs, merge-base
+      # failures, and approval-required runs from bot pushes).
+      - 'skills/**/EVAL.md'
 
 permissions:
   contents: read
@@ -37,9 +42,9 @@ jobs:
 
       - name: Find changed skill (must be exactly one)
         run: |
-          # tail -n 1: the script prints diagnostics to stderr, but this
-          # guards against future stdout pollution breaking $GITHUB_ENV.
-          SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}" | tail -n 1)
+          # No `| tail` here: the script exits 1 on failure and that exit code
+          # must propagate (a pipe would mask it without pipefail).
+          SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}")
           echo "SKILL=$SKILL" >> "$GITHUB_ENV"
 
       - name: Run TS pre-check (validate + security)
