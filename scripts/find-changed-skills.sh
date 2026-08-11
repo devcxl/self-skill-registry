@@ -7,10 +7,11 @@
 # Exits 1 if zero or multiple skills were changed under skills/.
 set -euo pipefail
 
-BASE_REF="$1"
+BASE_REF="${1:-main}"
 
-# Fetch base branch to ensure it's available for the diff
-git fetch origin "$BASE_REF" --depth=1 >/dev/null 2>&1
+# Fetch base branch to ensure it's available for the diff.
+# Tolerate failures (e.g. workflow_dispatch where base_ref is empty).
+git fetch origin "$BASE_REF" --depth=1 >/dev/null 2>&1 || true
 
 # Get list of changed directories under skills/
 SKILLS=$(git diff --name-only "origin/$BASE_REF...HEAD" |
@@ -34,5 +35,7 @@ if [ "$COUNT" -eq 0 ] || [ -z "$SKILLS" ]; then
   exit 1
 fi
 
-echo "✅ Single skill PR: $SKILLS"
+# stdout must contain ONLY the skill name — it is captured by the workflow
+# via $(...) and written to $GITHUB_ENV. Diagnostics go to stderr.
+echo "✅ Single skill PR: $SKILLS" >&2
 echo "$SKILLS"

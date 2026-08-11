@@ -37,7 +37,9 @@ jobs:
 
       - name: Find changed skill (must be exactly one)
         run: |
-          SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}")
+          # tail -n 1: the script prints diagnostics to stderr, but this
+          # guards against future stdout pollution breaking $GITHUB_ENV.
+          SKILL=$(bash scripts/find-changed-skills.sh "${{ github.base_ref }}" | tail -n 1)
           echo "SKILL=$SKILL" >> "$GITHUB_ENV"
 
       - name: Run TS pre-check (validate + security)
