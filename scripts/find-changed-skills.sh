@@ -9,16 +9,28 @@ set -euo pipefail
 
 BASE_REF="${1:-main}"
 
-# Fetch base branch to ensure it's available for the diff.
-# Tolerate failures (e.g. workflow_dispatch where base_ref is empty).
-git fetch origin "$BASE_REF" --depth=1 >/dev/null 2>&1 || true
+# NOTE: Do NOT shallow-fetch the base branch here. actions/checkout already
+# fetched all branches with fetch-depth: 0, and `fetch --depth=1` would
+# truncate history, breaking `git diff base...HEAD` ("no merge base") when
+# the remote base has moved past the PR's merge-base.
 
-# Get list of changed directories under skills/
-SKILLS=$(git diff --name-only "origin/$BASE_REF...HEAD" |
-  grep '^skills/' |
-  cut -d'/' -f2 |
-  sort -u |
-  grep -v '^$' || true)
+# Get list of changed directories under skills/ (PR-only changes: three-dot diff)
+if git merge-base "origin/$BASE_REF" HEAD >/dev/null 2>&1; then
+  SKILLS=$(git diff --name-only "origin/$BASE_REF...HEAD" |
+    grep '^skills/' |
+    cut -d'/' -f2 |
+    sort -u |
+    grep -v '^$' || true)
+else
+  # No merge base (edge case, e.g. re-run after the base moved): fall back to
+  # the last commit's changes so bot-triggered re-runs still resolve the skill.
+  echo "⚠️  No merge base with origin/$BASE_REF; comparing last commit only" >&2
+  SKILLS=$(git diff-tree --name-only -r --root --no-commit-id HEAD |
+    grep '^skills/' |
+    cut -d'/' -f2 |
+    sort -u |
+    grep -v '^$' || true)
+fi
 
 # Count non-empty lines (handles empty SKILLS correctly)
 COUNT=$(echo "$SKILLS" | grep -c . || true)
