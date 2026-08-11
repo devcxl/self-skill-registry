@@ -1,3 +1,98 @@
+---
+skillName: deep-analysis-methodology
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 89
+categoryScores:
+  functional-suitability: 12
+  reliability: 9
+  performance: 6
+  usability-ai: 16
+  usability-human: 6
+  security: 12
+  maintainability: 11
+  agent-specific: 17
+findings:
+  - id: F001
+    criterion: trigger-precision
+    category: agent-specific
+    score: 3
+    description: >-
+      Frontmatter description is only 8 words ('深度分析方法论 — MECE 拆解、5 Why
+      根因分析、假设驱动验证、12 步 SOP') and contains no 'Use when...' trigger contexts. The
+      automated check FAILED on description length. Specific domain keywords
+      (MECE, 5 Why, 根因, 复盘) reduce false-positive risk, but generic '分析'
+      mentions could still cause ambiguous activation.
+    priority: P1
+    suggestion: >-
+      Expand description with explicit 'Use when...' contexts
+      (事故排查、技术复盘、业务分析、根因定位) and '不要用于...' boundaries, e.g.
+      '当用户要求进行事故分析、根因排查、复盘或业务分析时触发；不要用于编写代码'
+  - id: F002
+    criterion: token-cost
+    category: performance
+    score: 2
+    description: >-
+      SKILL.md is 283 body lines, falling in the 250-400 range. Content is dense
+      and high-value for a methodology reference, but the entire skill loads
+      into context on every activation.
+    priority: P1
+    suggestion: >-
+      Move per-method deep-dives (MECE 详解, 5 Why 深入, 因果链, 风险矩阵) into a
+      references/ directory linked from SKILL.md to reduce context load
+  - id: F003
+    criterion: progressive-disclosure
+    category: agent-specific
+    score: 2
+    description: >-
+      Single monolithic SKILL.md with no references/ directory. The domain is
+      rich (10 methodologies + 12-step SOP + output templates) and would benefit
+      from a 2-level disclosure hierarchy.
+    priority: P1
+    suggestion: >-
+      Create references/ with per-methodology deep-dive files and link them from
+      SKILL.md, keeping the main file to the SOP overview and trigger flow
+  - id: F004
+    criterion: error-reporting
+    category: reliability
+    score: 2
+    description: >-
+      No structured error/troubleshooting reference. Recovery guidance exists
+      only implicitly via confidence labeling ('无法完整验证时标注置信度') and the Step 12
+      verification checklist.
+    priority: P2
+    suggestion: >-
+      Add a troubleshooting subsection covering common failure modes
+      (问题不可复现、证据不足、因果无法完整验证) with concrete fallback steps
+  - id: F005
+    criterion: testability
+    category: maintainability
+    score: 3
+    description: >-
+      Verification strategy exists via Step 12 checklist and per-measure 验证标准,
+      but there is no dedicated testing/verification reference file and the
+      skill ships no test cases.
+    priority: P2
+    suggestion: >-
+      Add a worked example analysis (references/example-analysis.md) that
+      doubles as a verification reference for evaluating future outputs
+summary: >-
+  deep-analysis-methodology v1.0.0 is a well-structured, high-quality
+  documentation-only methodology skill covering MECE, 5 Why, hypothesis-driven
+  verification, risk matrix, and a 12-step analysis SOP with output templates.
+  Automated checks: 12 pass / 1 warn / 1 fail (86%), with the failure being the
+  short 8-word description lacking trigger contexts. Manual scoring: 89/100.
+  Behavior verification passed 5/5 test cases (2 positive, 1 negative, 2
+  boundary), confirming correct triggering on accident analysis and postmortem
+  prompts, no misfiring on code-writing prompts, and sensible handling of
+  ambiguous boundary prompts. No security issues, no credentials, no scripts, no
+  external dependencies. Approved for publishing with recommended improvements
+  to the frontmatter description and a references/ split for token efficiency.
+reviewedAt: '2026-08-11T14:45:00Z'
+reviewer: AI-Evaluator
+sourceCommit: d9b74adf8b9d6ce25e01e861944722e2874cc65c
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # deep-analysis-methodology Evaluation
