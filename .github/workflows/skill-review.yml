@@ -110,7 +110,7 @@ jobs:
       - name: Run AI review (OpenCode)
         uses: anomalyco/opencode/github@latest
         with:
-          model: minimax-cn-coding-plan/MiniMax-M2.7
+          model: opencode-go/deepseek-v4-flash
           use_github_token: true
           prompt: |
             Review the skill that was changed in this PR.
@@ -119,7 +119,7 @@ jobs:
             1. skills/<skill-name>/EVAL.md
             2. artifacts/skill-review.json
         env:
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Verify EVAL.md exists
