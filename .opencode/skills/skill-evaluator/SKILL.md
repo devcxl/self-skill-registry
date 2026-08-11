@@ -143,9 +143,31 @@ Also write `artifacts/skill-review.json` following the schema above.
 3. **Determine skill type** — If the skill has no executable scripts (`scripts/` empty or absent), apply the **Document-Only Adjustments** in [references/rubric.md](references/rubric.md). Auto-exempt criteria 3.2, 8.3, 8.4, 8.5 (score 4 each). Use adjusted standards for 2.1, 2.2, 4.3, 4.4, 5.2, 7.1, 7.2, 7.3.
 4. **Read/skim the scripts** — assess code quality, error handling, testability (skip for doc-only skills)
 5. **Score each manual criterion** using [references/rubric.md](references/rubric.md) — concrete criteria per level
-6. **Prioritize findings** as P0 (blocks publishing) / P1 (should fix) / P2 (nice to have)
-7. **Write EVAL.md** in the skill directory with scores + findings
-8. **Write skill-review.json** in the artifacts directory
+6. **Run behavior verification** — if the skill's EVAL.md has test cases in the Behavior Verification section, execute each prompt against an Agent with the skill loaded. Verify outputs against the defined checkpoints. Record pass/fail results. If no test cases exist, flag this as a P1 finding and write test cases.
+7. **Prioritize findings** as P0 (blocks publishing) / P1 (should fix) / P2 (nice to have)
+8. **Write EVAL.md** in the skill directory with scores + findings
+9. **Write skill-review.json** in the artifacts directory
+
+### Behavior Verification Details
+
+行为验证是评估 skill **在使用中的实际表现**，而非仅检查其文件结构。
+
+**验证方法**：
+1. 读取 skill EVAL.md 的 "Behavior Verification" 章节中的测试用例表
+2. 逐条向 Agent 发送提示词（skill 已加载）
+3. 比对输出与验证点：
+   - `[D]` 验证点 — 用正则/关键字匹配直接判定 pass/fail
+   - `[J]` 验证点 — 人工判断输出质量，给出 pass/fail + 说明
+4. 在 EVAL.md 的 "验证结果" 表中填入通过情况
+
+**通过标准**：
+- 正向用例必须 100% 通过 → 否则 P0
+- 负向用例必须 100% 通过 → 否则 P1
+- 边界用例 ≥ 50% 通过 → 否则 P2
+
+**如果 EVAL.md 中没有测试用例**：
+- 初审：标记为 P1 缺陷，要求 skill 作者补充
+- 复审：必须包含至少 4 条用例（2 正向 + 1 负向 + 1 边界）
 
 ## Categories (8 categories, 25 criteria)
 
