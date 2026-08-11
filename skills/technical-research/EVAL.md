@@ -1,3 +1,85 @@
+---
+skillName: technical-research
+skillVersion: 1.0.0
+reviewStatus: approved
+needsManualReview: false
+totalScore: 91
+categoryScores:
+  functional-suitability: 12
+  reliability: 11
+  performance: 6
+  usability-ai: 16
+  usability-human: 7
+  security: 12
+  maintainability: 10
+  agent-specific: 17
+findings:
+  - id: F001
+    criterion: trigger-precision
+    category: agent-specific
+    score: 2
+    description: >-
+      Frontmatter description is only ~30 characters (automated check FAIL) and
+      lacks explicit 'Use when...' / '不适用于' trigger contexts. It contains strong
+      domain keywords (技术选型/架构评估/框架/中间件/API/模型调研) so activation is partially
+      reliable, but short descriptions risk missed or false triggers.
+    priority: P1
+    suggestion: >-
+      Expand description with trigger contexts, e.g.
+      '技术选型、方案对比、架构评估、框架/中间件/数据库/云服务/API/模型调研时触发。不用于单点事实查询或概念解释。'
+  - id: F002
+    criterion: token-cost
+    category: performance
+    score: 2
+    description: >-
+      SKILL.md body is 452 lines, bordering the 400+ threshold where context
+      cost becomes significant. Content is dense and valuable, but Step 5's
+      detailed dimension checklists (功能/性能/稳定性/运维/安全/生态) could be externalized.
+    priority: P2
+    suggestion: >-
+      Move detailed SOP checklists into a references/ file so the core SKILL.md
+      stays leaner and preserves progressive disclosure.
+  - id: F003
+    criterion: testability
+    category: maintainability
+    score: 2
+    description: >-
+      The skill provides a quality gate checklist for verification but has no
+      built-in behavior verification test cases. The initial review supplies 5
+      test cases (2 positive, 1 negative, 2 boundary) that must be executed
+      against an Agent and results recorded during CI re-review.
+    priority: P2
+    suggestion: >-
+      Execute the T001-T005 behavior verification cases and record results in
+      EVAL.md; consider adding a 验证策略 reference file.
+  - id: F004
+    criterion: error-reporting
+    category: reliability
+    score: 3
+    description: >-
+      Conclusion states (CONFIRMED/INFERRED/UNVERIFIED/CONFLICTED) and the
+      quality gate checklist serve as status/error reporting, but there is no
+      structured error reference mapping each state to its required evidence and
+      next action.
+    priority: P2
+    suggestion: >-
+      Add a short '状态速查' table in SKILL.md linking each conclusion state to
+      required evidence + follow-up action.
+summary: >-
+  technical-research is a high-quality documentation-only skill that turns tech
+  research into evidence-driven decisions. It offers a complete 12-step SOP with
+  evidence grading (A-E), conclusion states, hard-constraint-first evaluation,
+  TCO/exit cost analysis, quality gates, anti-patterns, and 4 well-formed
+  templates (research report, evidence matrix, PoC plan, ADR). No credentials,
+  no scripts, no external dependencies, no security concerns. Main weakness is
+  the short frontmatter description (automated check FAIL) which should add 'Use
+  when' trigger contexts; secondary improvements target token cost and built-in
+  behavior verification test cases. Score 91/100, no P0 findings — approved for
+  publishing.
+reviewedAt: '2026-08-11T11:30:00Z'
+reviewer: AI-Evaluator
+sourceCommit: 721307b702aab46862a991652461736a4d4256bd
+---
 <!-- Front matter is injected by CI from artifacts/skill-review.json. Do not add it manually. -->
 
 # technical-research Evaluation
