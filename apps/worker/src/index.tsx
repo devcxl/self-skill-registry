@@ -13,6 +13,7 @@ import settings from './routes/settings';
 import admin from './routes/admin';
 import adminUi from './routes/admin-ui';
 import { HomePage, SkillsPage, SkillDetailPage, ErrorPage } from './ui/pages';
+import { createT, detectLocale } from './i18n';
 
 const app = new Hono<HonoEnv>();
 
@@ -49,14 +50,16 @@ app.route('/admin', admin);
 // ── Web UI Routes ────────────────────────────────────────────────────
 
 app.get('/', async (c) => {
+  const t = createT(detectLocale(c));
   const repo = new RegistryRepository(c.env.DB);
   const { skills: list } = await repo.listSkills();
   const skillList = list.map(toSkillResponse);
   const user = await getSessionUser(c);
-  return c.html(<HomePage skills={skillList} user={user} />);
+  return c.html(<HomePage skills={skillList} user={user} t={t} />);
 });
 
 app.get('/skills', async (c) => {
+  const t = createT(detectLocale(c));
   const repo = new RegistryRepository(c.env.DB);
   const q = c.req.query('q');
   const page = parseInt(c.req.query('page') || '1', 10);
@@ -67,18 +70,19 @@ app.get('/skills', async (c) => {
     const result = await repo.search({ q, page, perPage });
     const skillList = result.skills.map(toSkillResponse);
     return c.html(
-      <SkillsPage skills={skillList} total={result.total} query={{ q, page, perPage }} user={user} />,
+      <SkillsPage skills={skillList} total={result.total} query={{ q, page, perPage }} user={user} t={t} />,
     );
   }
 
   const result = await repo.listSkills({ page, perPage });
   const skillList = result.skills.map(toSkillResponse);
   return c.html(
-    <SkillsPage skills={skillList} total={result.total} query={{ page, perPage }} user={user} />,
+    <SkillsPage skills={skillList} total={result.total} query={{ page, perPage }} user={user} t={t} />,
   );
 });
 
 app.get('/skills/:name', async (c) => {
+  const t = createT(detectLocale(c));
   const name = c.req.param('name');
   const repo = new RegistryRepository(c.env.DB);
   const skill = await repo.getSkill(name);
@@ -86,7 +90,12 @@ app.get('/skills/:name', async (c) => {
 
   if (!skill || skill.review_status !== 'approved') {
     return c.html(
-      <ErrorPage title="Skill Not Found" message={`Skill "${name}" is not available.`} user={user} />,
+      <ErrorPage
+        title={t('error.skillNotFound')}
+        message={t('error.skillNotAvailable', { name })}
+        user={user}
+        t={t}
+      />,
       404,
     );
   }
@@ -107,7 +116,7 @@ app.get('/skills/:name', async (c) => {
     }
   }
 
-  return c.html(<SkillDetailPage skill={skillResp} user={user} />);
+  return c.html(<SkillDetailPage skill={skillResp} user={user} t={t} />);
 });
 
 // ── API v1 Routes ─────────────────────────────────────────────────────

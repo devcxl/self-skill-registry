@@ -6,6 +6,7 @@ import { UserRepository } from '../db-users';
 import { getSessionUser } from '../middleware/auth';
 import type { User } from '../types/db';
 import { Layout } from '../ui/layout';
+import { createT, detectLocale } from '../i18n';
 
 const adminUi = new Hono<HonoEnv>();
 
@@ -22,16 +23,17 @@ async function requireAdmin(c: Context<HonoEnv>): Promise<User> {
   const user = await requireLogin(c);
   if (user.is_admin !== 1) {
     const loginUser = await getSessionUser(c);
+    const t = createT(detectLocale(c));
     c.html(
-      <Layout title="Access Denied" user={loginUser}>
+      <Layout title={t('admin.accessDenied')} user={loginUser} t={t}>
         <div class="text-center py-16 max-w-md mx-auto">
-          <h1 class="font-display text-display-sm text-ink mb-4">Access Denied</h1>
-          <p class="text-muted mb-8">You do not have permission to view this page.</p>
+          <h1 class="font-display text-display-sm text-ink mb-4">{t('admin.accessDenied')}</h1>
+          <p class="text-muted mb-8">{t('admin.noPermission')}</p>
           <a
             href="/"
             class="inline-flex items-center px-5 py-3 bg-canvas text-ink border border-hairline rounded-md text-sm font-medium hover:bg-surface-soft transition-colors"
           >
-            ← Back to Home
+            {t('error.backHome')}
           </a>
         </div>
       </Layout>,
@@ -55,19 +57,21 @@ adminUi.get('/', async (c) => {
   const pending = allSkills.filter((s) => s.review_status !== 'approved');
   const users = await userRepo.listUsers();
 
+  const t = createT(detectLocale(c));
+
   return c.html(
-    <Layout title="Admin" user={user}>
+    <Layout title={t('nav.admin')} user={user} t={t}>
       <div class="mb-10">
-        <h1 class="font-display text-display-md text-ink mb-2">Admin Panel</h1>
-        <p class="text-muted">Manage skills and users</p>
+        <h1 class="font-display text-display-md text-ink mb-2">{t('admin.panel')}</h1>
+        <p class="text-muted">{t('admin.manage')}</p>
       </div>
 
       <section class="mb-12">
         <h2 class="font-display text-display-sm text-ink mb-6">
-          Pending / Non-Approved Skills ({pending.length})
+          {t('admin.pending', { n: pending.length })}
         </h2>
         {pending.length === 0 ? (
-          <p class="text-muted py-8 text-center bg-surface-soft rounded-lg">No pending skills.</p>
+          <p class="text-muted py-8 text-center bg-surface-soft rounded-lg">{t('admin.noPending')}</p>
         ) : (
           <div class="space-y-3">
             {pending.map((s) => (
@@ -75,7 +79,7 @@ adminUi.get('/', async (c) => {
                 <div>
                   <h3 class="font-sans font-medium text-ink">{s.name}</h3>
                   <p class="text-sm text-muted mt-1">
-                    v{s.latest_version} · Score: {s.latest_score} · Status:{' '}
+                    {t('admin.versionScore', { version: s.latest_version, score: s.latest_score })} {' '}
                     <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-accent-amber/15 text-accent-amber">
                       {s.review_status}
                     </span>
@@ -106,7 +110,7 @@ adminUi.get('/', async (c) => {
       </section>
 
       <section class="mb-12">
-        <h2 class="font-display text-display-sm text-ink mb-6">All Skills</h2>
+        <h2 class="font-display text-display-sm text-ink mb-6">{t('admin.allSkills')}</h2>
         <div class="space-y-2">
           {allSkills.map((s) => (
             <div class="bg-surface-card rounded-lg p-4 flex items-center justify-between">
@@ -133,11 +137,11 @@ adminUi.get('/', async (c) => {
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-hairline">
-                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">Email</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">Provider</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">Role</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">Action</th>
+                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">{t('admin.name')}</th>
+                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">{t('admin.email')}</th>
+                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">{t('admin.provider')}</th>
+                <th class="text-left px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">{t('admin.role')}</th>
+                <th class="text-right px-5 py-3 text-xs font-medium text-muted uppercase tracking-wider">{t('admin.action')}</th>
               </tr>
             </thead>
             <tbody>

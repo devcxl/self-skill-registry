@@ -4,6 +4,7 @@ import type { HonoEnv } from '../types/bindings';
 import { UserRepository } from '../db-users';
 import { getSessionUser } from '../middleware/auth';
 import { Layout } from '../ui/layout';
+import { createT, detectLocale } from '../i18n';
 
 const settings = new Hono<HonoEnv>();
 
@@ -21,30 +22,32 @@ settings.get('/', async (c) => {
   const repo = new UserRepository(c.env.DB);
   const tokens = await repo.listTokens(user.id);
 
+  const t = createT(detectLocale(c));
+
   return c.html(
-    <Layout title="Settings" user={user}>
+    <Layout title={t('nav.settings')} user={user} t={t}>
       <div class="max-w-2xl mx-auto">
-        <h1 class="font-display text-display-md text-ink mb-10">Account Settings</h1>
+        <h1 class="font-display text-display-md text-ink mb-10">{t('settings.accountSettings')}</h1>
 
         {/* ── Profile Card ──────────────────────────── */}
         <div class="bg-surface-card rounded-lg p-8 mb-6">
-          <h2 class="font-sans text-lg font-medium text-ink mb-6">Profile</h2>
+          <h2 class="font-sans text-lg font-medium text-ink mb-6">{t('settings.profile')}</h2>
           <dl class="space-y-4">
             <div>
-              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Name</dt>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">{t('settings.name')}</dt>
               <dd class="text-bodycopy">{user.display_name || '—'}</dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Email</dt>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">{t('settings.email')}</dt>
               <dd class="text-bodycopy">{user.email || '—'}</dd>
             </div>
             <div>
-              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Provider</dt>
+              <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">{t('settings.provider')}</dt>
               <dd class="text-bodycopy">{user.oidc_provider}</dd>
             </div>
             {!!user.is_admin && (
               <div>
-                <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">Role</dt>
+                <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">{t('settings.role')}</dt>
                 <dd class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-success/15 text-success">
                   Admin
                 </dd>
@@ -55,9 +58,9 @@ settings.get('/', async (c) => {
 
         {/* ── API Tokens Card ───────────────────────── */}
         <div class="bg-surface-card rounded-lg p-8 mb-6">
-          <h2 class="font-sans text-lg font-medium text-ink mb-6">API Tokens</h2>
+          <h2 class="font-sans text-lg font-medium text-ink mb-6">{t('settings.apiTokens')}</h2>
           {tokens.length === 0 ? (
-            <p class="text-muted mb-6">No tokens yet.</p>
+            <p class="text-muted mb-6">{t('settings.noTokens')}</p>
           ) : (
             <ul class="space-y-0 mb-6">
               {tokens.map((t) => (
@@ -81,7 +84,7 @@ settings.get('/', async (c) => {
               type="text"
               name="label"
               value="default"
-              placeholder="Label"
+              placeholder={t('settings.label')}
               class="flex-grow px-3.5 py-2.5 bg-canvas text-ink text-sm border border-hairline rounded-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-shadow"
             />
             <button
@@ -114,12 +117,14 @@ settings.post('/tokens/create', async (c) => {
   const repo = new UserRepository(c.env.DB);
   const { token } = await repo.createToken(user.id, form.label || 'default');
 
+  const t = createT(detectLocale(c));
+
   return c.html(
-    <Layout title="Token Created" user={user}>
+    <Layout title={t('settings.tokenCreated')} user={user} t={t}>
       <div class="max-w-lg mx-auto text-center py-12">
-        <h1 class="font-display text-display-sm text-ink mb-4">Token Created</h1>
+        <h1 class="font-display text-display-sm text-ink mb-4">{t('settings.tokenCreated')}</h1>
         <p class="text-error font-medium text-sm mb-6">
-          Copy this token now. It will not be shown again.
+          {t('settings.tokenCopyWarning')}
         </p>
         <div class="bg-surface-dark rounded-lg p-5 mb-8">
           <pre class="text-on-dark text-sm font-mono overflow-x-auto leading-relaxed">

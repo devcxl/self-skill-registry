@@ -5,6 +5,7 @@ import type { HonoEnv } from '../types/bindings';
 import { UserRepository } from '../db-users';
 import { clearSession, createSession, getSessionUser } from '../middleware/auth';
 import { generateBase64UrlToken, sha256Base64Url, sha256Hex } from '../utils/crypto';
+import { detectLocale } from '../i18n';
 
 const auth = new Hono<HonoEnv>();
 
@@ -46,8 +47,9 @@ function clearOAuthStateCookie(c: Context<HonoEnv>): void {
 // ── GET /auth/login ──────────────────────────────────────────────────
 
 auth.get('/login', (c) => {
+  const locale = detectLocale(c);
   return c.html(
-    <html lang="zh-CN">
+    <html lang={locale === 'zh' ? 'zh-CN' : 'en'}>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
