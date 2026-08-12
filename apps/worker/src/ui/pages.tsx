@@ -98,23 +98,21 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
         {/* ── Details Card (feature-card) ──────────── */}
         <div class="bg-surface-card rounded-lg p-8">
           <h2 class="font-sans text-lg font-medium text-ink mb-6">Details</h2>
-          <dl class="space-y-4">
-            <DetailRow label="Version" value={skill.latestVersion} mono />
-            <DetailRow label="Score" value={`${skill.latestScore}/100`} />
-            <DetailRow label="Status" value={skill.reviewStatus} badge />
-            <DetailRow label="Compatibility" value={skill.compatibility.join(', ')} />
-            {skill.category && <DetailRow label="Category" value={skill.category} />}
-          </dl>
-
-          {skill.categoryScores && (
-            <div class="mt-8 border-t border-hairline pt-6">
-              <h3 class="font-sans text-sm font-medium text-ink mb-2">Scores by Category</h3>
-              <p class="text-xs text-muted mb-4">
-                {Object.keys(skill.categoryScores).length} dimensions · radar
-              </p>
-              <ScoreRadar scores={skill.categoryScores} />
-            </div>
-          )}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <dl class="space-y-4">
+              <DetailRow label="Version" value={skill.latestVersion} mono />
+              <DetailRow label="Score" value={`${skill.latestScore}/100`} />
+              <DetailRow label="Status" value={skill.reviewStatus} badge />
+              <DetailRow label="Compatibility" value={skill.compatibility.join(', ')} />
+              {skill.category && <DetailRow label="Category" value={skill.category} />}
+            </dl>
+            {skill.categoryScores && (
+              <div>
+                <h3 class="font-sans text-sm font-medium text-ink mb-2">Scores by Category</h3>
+                <ScoreRadar scores={skill.categoryScores} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Install Card (code-window-card) ──────── */}
