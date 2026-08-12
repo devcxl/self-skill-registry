@@ -105,6 +105,16 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
             <DetailRow label="Compatibility" value={skill.compatibility.join(', ')} />
             {skill.category && <DetailRow label="Category" value={skill.category} />}
           </dl>
+
+          {skill.categoryScores && (
+            <div class="mt-8 border-t border-hairline pt-6">
+              <h3 class="font-sans text-sm font-medium text-ink mb-2">Scores by Category</h3>
+              <p class="text-xs text-muted mb-4">
+                {Object.keys(skill.categoryScores).length} dimensions · radar
+              </p>
+              <ScoreRadar scores={skill.categoryScores} />
+            </div>
+          )}
         </div>
 
         {/* ── Install Card (code-window-card) ──────── */}
@@ -171,6 +181,129 @@ export function ErrorPage({ title, message, user }: { title: string; message: st
 }
 
 // ─── Shared Components ────────────────────────────────────────────────
+
+/**
+ * Category metadata for the radar chart — must match the evaluator rubric
+ * (review-categories.ts in registry-core: criteria count × 4 per category).
+ */
+const REVIEW_CATEGORIES = [
+  { id: 'functional-suitability', label: 'Functional', max: 12 },
+  { id: 'reliability', label: 'Reliability', max: 12 },
+  { id: 'performance', label: 'Performance', max: 8 },
+  { id: 'usability-ai', label: 'AI Usability', max: 16 },
+  { id: 'usability-human', label: 'Human UX', max: 8 },
+  { id: 'security', label: 'Security', max: 12 },
+  { id: 'maintainability', label: 'Maintainability', max: 12 },
+  { id: 'agent-specific', label: 'Agent-Spec.', max: 20 },
+] as const;
+
+const RADAR_SIZE = 260;
+const RADAR_CX = 130;
+const RADAR_CY = 130;
+const RADAR_R = 88;
+
+/** Point on the radar at `ratio` (0–1) of the max radius, starting at top */
+function radarPoint(index: number, ratio: number) {
+  const angle = -Math.PI / 2 + (2 * Math.PI * index) / REVIEW_CATEGORIES.length;
+  return {
+    x: RADAR_CX + RADAR_R * ratio * Math.cos(angle),
+    y: RADAR_CY + RADAR_R * ratio * Math.sin(angle),
+  };
+}
+
+/** Radar (spider) chart of the 8 evaluation dimensions, pure SVG, no deps */
+function ScoreRadar({ scores }: { scores: Record<string, number> }) {
+  const toPoints = (ratio: number) =>
+    REVIEW_CATEGORIES.map((_, i) => {
+      const p = radarPoint(i, ratio);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+
+  const dataPoints = REVIEW_CATEGORIES.map((cat, i) =>
+    radarPoint(i, Math.min((scores[cat.id] ?? 0) / cat.max, 1)),
+  );
+  const dataPolygon = dataPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+
+  return (
+    <svg
+      viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
+      class="w-full max-w-[280px] mx-auto"
+      role="img"
+      aria-label="Category scores radar chart"
+    >
+      {/* grid rings: 25% / 50% / 75% / 100% */}
+      {[0.25, 0.5, 0.75, 1].map((ring) => (
+        <polygon
+          points={toPoints(ring)}
+          fill="none"
+          class="text-hairline"
+          stroke="currentColor"
+          stroke-width="1"
+        />
+      ))}
+      {/* axes */}
+      {REVIEW_CATEGORIES.map((_, i) => {
+        const p = radarPoint(i, 1);
+        return (
+          <line
+            x1={RADAR_CX}
+            y1={RADAR_CY}
+            x2={p.x}
+            y2={p.y}
+            class="text-hairline"
+            stroke="currentColor"
+            stroke-width="1"
+          />
+        );
+      })}
+      {/* data polygon */}
+      <polygon
+        points={dataPolygon}
+        class="text-primary"
+        fill="currentColor"
+        fill-opacity="0.18"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linejoin="round"
+      />
+      {/* vertex dots + labels */}
+      {REVIEW_CATEGORIES.map((cat, i) => {
+        const p = dataPoints[i];
+        const labelP = radarPoint(i, 1.34);
+        const angle = -Math.PI / 2 + (2 * Math.PI * i) / REVIEW_CATEGORIES.length;
+        const anchor =
+          Math.cos(angle) > 0.25 ? 'start' : Math.cos(angle) < -0.25 ? 'end' : 'middle';
+        const score = scores[cat.id] ?? 0;
+        return (
+          <g key={cat.id}>
+            <circle cx={p.x} cy={p.y} r="3" class="text-primary" fill="currentColor" />
+            <text
+              x={labelP.x}
+              y={labelP.y}
+              text-anchor={anchor}
+              class="text-muted"
+              fill="currentColor"
+              font-size="10"
+              font-family="Inter, sans-serif"
+            >
+              {cat.label}
+              <tspan
+                x={labelP.x}
+                dy="10"
+                class="text-muted-soft"
+                fill="currentColor"
+                font-size="9"
+              >
+                {' '}
+                {score}/{cat.max}
+              </tspan>
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 function DetailRow({
   label,

@@ -77,6 +77,7 @@ export interface SkillResponse {
   latestScore: number;
   reviewStatus: string;
   lifecycleStatus: string;
+  categoryScores?: Record<string, number>;
   readme?: string;
   createdAt: string;
   updatedAt: string;

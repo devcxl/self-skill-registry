@@ -92,6 +92,21 @@ app.get('/skills/:name', async (c) => {
   }
 
   const skillResp = toSkillResponse(skill);
+
+  // Attach category scores from the latest review for the radar chart
+  const reviews = await repo.listReviews(name);
+  const latest = reviews[0];
+  if (latest?.review_json) {
+    try {
+      const report = JSON.parse(latest.review_json) as { categoryScores?: Record<string, number> };
+      if (report.categoryScores) {
+        skillResp.categoryScores = report.categoryScores;
+      }
+    } catch {
+      // Malformed review_json — radar chart simply won't render
+    }
+  }
+
   return c.html(<SkillDetailPage skill={skillResp} user={user} />);
 });
 
