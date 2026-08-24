@@ -5,7 +5,7 @@ import type { HonoEnv } from '../types/bindings';
 import { UserRepository } from '../db-users';
 import { clearSession, createSession, getSessionUser } from '../middleware/auth';
 import { generateBase64UrlToken, sha256Base64Url, sha256Hex } from '../utils/crypto';
-import { detectLocale } from '../i18n';
+import { createT, detectLocale } from '../i18n';
 
 const auth = new Hono<HonoEnv>();
 
@@ -48,12 +48,13 @@ function clearOAuthStateCookie(c: Context<HonoEnv>): void {
 
 auth.get('/login', (c) => {
   const locale = detectLocale(c);
+  const t = createT(locale, c.req.url);
   return c.html(
     <html lang={locale === 'zh' ? 'zh-CN' : 'en'}>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Login — Skill Registry</title>
+        <title>{t('auth.title')} — Skill Registry</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link
@@ -131,13 +132,20 @@ tailwind.config = {
             <h1 class="font-display text-2xl tracking-tight text-ink">Skill Registry</h1>
           </div>
           <p class="text-muted text-sm mb-8 text-center leading-relaxed">
-            Sign in to manage your skills and API tokens.
+            {t('auth.subtitle')}
           </p>
           <a
             href="/auth/login/github"
             class="block w-full text-center px-5 py-3 bg-surface-dark text-on-dark rounded-md text-sm font-medium hover:bg-surface-dark-elevated transition-colors"
           >
-            Sign in with GitHub
+            {t('auth.github')}
+          </a>
+          <a
+            href={t.switchHref}
+            class="block mt-4 text-center text-sm font-medium text-muted hover:text-primary transition-colors"
+            title={locale === 'zh' ? t('nav.switchToEnglish') : t('nav.switchToChinese')}
+          >
+            {locale === 'zh' ? 'EN' : '中文'}
           </a>
         </div>
       </body>

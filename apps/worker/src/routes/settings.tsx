@@ -16,13 +16,14 @@ async function requireUser(c: Context<HonoEnv>) {
 // ── GET /settings ─────────────────────────────────────────────────────
 
 settings.get('/', async (c) => {
+  const locale = detectLocale(c);
   const user = await requireUser(c);
   if (!user) return c.redirect('/auth/login');
 
   const repo = new UserRepository(c.env.DB);
   const tokens = await repo.listTokens(user.id);
 
-  const t = createT(detectLocale(c));
+  const t = createT(locale, c.req.url);
 
   return c.html(
     <Layout title={t('nav.settings')} user={user} t={t}>
@@ -49,7 +50,7 @@ settings.get('/', async (c) => {
               <div>
                 <dt class="text-xs font-medium text-muted uppercase tracking-wider mb-1">{t('settings.role')}</dt>
                 <dd class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-success/15 text-success">
-                  Admin
+                  {t('settings.roleAdmin')}
                 </dd>
               </div>
             )}
@@ -63,16 +64,16 @@ settings.get('/', async (c) => {
             <p class="text-muted mb-6">{t('settings.noTokens')}</p>
           ) : (
             <ul class="space-y-0 mb-6">
-              {tokens.map((t) => (
+              {tokens.map((token) => (
                 <li class="flex items-center justify-between py-3 border-b border-hairline text-sm">
-                  <span class="font-medium text-ink">{t.label}</span>
+                  <span class="font-medium text-ink">{token.label}</span>
                   <form action="/settings/tokens/delete" method="post">
-                    <input type="hidden" name="tokenId" value={t.id} />
+                    <input type="hidden" name="tokenId" value={token.id} />
                     <button
                       type="submit"
                       class="text-error text-sm font-medium hover:underline"
                     >
-                      Revoke
+                      {t('settings.revoke')}
                     </button>
                   </form>
                 </li>
@@ -91,7 +92,7 @@ settings.get('/', async (c) => {
               type="submit"
               class="inline-flex items-center px-5 py-2.5 bg-primary text-on-primary rounded-md text-sm font-medium hover:bg-primary-active transition-colors"
             >
-              Create
+              {t('settings.create')}
             </button>
           </form>
         </div>
@@ -100,7 +101,7 @@ settings.get('/', async (c) => {
           href="/auth/logout"
           class="inline-flex items-center text-error text-sm font-medium hover:underline"
         >
-          Sign Out
+          {t('settings.signOut')}
         </a>
       </div>
     </Layout>,
@@ -110,6 +111,7 @@ settings.get('/', async (c) => {
 // ── POST /settings/tokens/create ──────────────────────────────────────
 
 settings.post('/tokens/create', async (c) => {
+  const locale = detectLocale(c);
   const user = await requireUser(c);
   if (!user) return c.redirect('/auth/login');
 
@@ -117,7 +119,8 @@ settings.post('/tokens/create', async (c) => {
   const repo = new UserRepository(c.env.DB);
   const { token } = await repo.createToken(user.id, form.label || 'default');
 
-  const t = createT(detectLocale(c));
+  const settingsUrl = new URL('/settings', c.req.url).toString();
+  const t = createT(locale, settingsUrl);
 
   return c.html(
     <Layout title={t('settings.tokenCreated')} user={user} t={t}>
@@ -135,7 +138,7 @@ settings.post('/tokens/create', async (c) => {
           href="/settings"
           class="inline-flex items-center px-5 py-3 bg-canvas text-ink border border-hairline rounded-md text-sm font-medium hover:bg-surface-soft transition-colors"
         >
-          ← Back to Settings
+          {t('settings.backToSettings')}
         </a>
       </div>
     </Layout>,

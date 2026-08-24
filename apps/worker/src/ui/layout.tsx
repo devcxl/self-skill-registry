@@ -148,9 +148,9 @@ tailwind.config = {
               )}
               {/* Language switcher */}
               <a
-                href={`?lang=${locale === 'zh' ? 'en' : 'zh'}`}
+                href={t.switchHref}
                 class="text-sm font-medium text-muted hover:text-primary transition-colors"
-                title={locale === 'zh' ? 'Switch to English' : '切换到中文'}
+                title={locale === 'zh' ? t('nav.switchToEnglish') : t('nav.switchToChinese')}
               >
                 {locale === 'zh' ? 'EN' : '中文'}
               </a>

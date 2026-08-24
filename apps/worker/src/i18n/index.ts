@@ -49,10 +49,12 @@ export type TFunction = {
   (key: string, vars?: Record<string, string | number>): string;
   /** Locale of the bound messages */
   locale: Locale;
+  /** URL for switching locale while preserving the current route/query */
+  switchHref: string;
 };
 
-/** Build a translate function for the given locale */
-export function createT(locale: Locale): TFunction {
+/** Build a translate function for the given locale and request URL */
+export function createT(locale: Locale, currentUrl?: string): TFunction {
   const fn = ((key: string, vars?: Record<string, string | number>) => {
     let str = MESSAGES[locale][key] ?? MESSAGES.en[key] ?? key;
     if (vars) {
@@ -63,7 +65,20 @@ export function createT(locale: Locale): TFunction {
     return str;
   }) as TFunction;
   fn.locale = locale;
+  const nextLocale = locale === 'zh' ? 'en' : 'zh';
+  if (currentUrl) {
+    const url = new URL(currentUrl);
+    url.searchParams.set('lang', nextLocale);
+    fn.switchHref = `${url.pathname}?${url.searchParams.toString()}`;
+  } else {
+    fn.switchHref = `?lang=${nextLocale}`;
+  }
   return fn;
+}
+
+export function translateStatus(t: TFunction, status: string): string {
+  const translated = t(`status.${status}`);
+  return translated === `status.${status}` ? status : translated;
 }
 
 export { VALID_LOCALES };

@@ -50,7 +50,7 @@ app.route('/admin', admin);
 // ── Web UI Routes ────────────────────────────────────────────────────
 
 app.get('/', async (c) => {
-  const t = createT(detectLocale(c));
+  const t = createT(detectLocale(c), c.req.url);
   const repo = new RegistryRepository(c.env.DB);
   const { skills: list } = await repo.listSkills();
   const skillList = list.map(toSkillResponse);
@@ -59,7 +59,7 @@ app.get('/', async (c) => {
 });
 
 app.get('/skills', async (c) => {
-  const t = createT(detectLocale(c));
+  const t = createT(detectLocale(c), c.req.url);
   const repo = new RegistryRepository(c.env.DB);
   const q = c.req.query('q');
   const page = parseInt(c.req.query('page') || '1', 10);
@@ -82,7 +82,7 @@ app.get('/skills', async (c) => {
 });
 
 app.get('/skills/:name', async (c) => {
-  const t = createT(detectLocale(c));
+  const t = createT(detectLocale(c), c.req.url);
   const name = c.req.param('name');
   const repo = new RegistryRepository(c.env.DB);
   const skill = await repo.getSkill(name);
@@ -139,8 +139,24 @@ app.route('/v1', v1);
 
 // ── 404 ───────────────────────────────────────────────────────────────
 
-app.notFound((c) => {
-  return c.json({ error: 'Not found', code: 'NOT_FOUND' }, 404);
+app.notFound(async (c) => {
+  // Keep API clients on the JSON contract; render a localized page for browser requests.
+  const acceptsHtml = c.req.header('accept')?.includes('text/html');
+  if (!acceptsHtml) {
+    return c.json({ error: 'Not found', code: 'NOT_FOUND' }, 404);
+  }
+
+  const t = createT(detectLocale(c), c.req.url);
+  const user = await getSessionUser(c);
+  return c.html(
+    <ErrorPage
+      title={t('error.pageNotFound')}
+      message={t('error.pageNotFoundMessage')}
+      user={user}
+      t={t}
+    />,
+    404,
+  );
 });
 
 // ── Error Handler ─────────────────────────────────────────────────────

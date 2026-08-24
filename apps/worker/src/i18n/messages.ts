@@ -12,6 +12,8 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'nav.browse': 'Browse',
     'nav.settings': 'Settings',
     'nav.admin': 'Admin',
+    'nav.switchToEnglish': 'Switch to English',
+    'nav.switchToChinese': 'Switch to Chinese',
     'footer.tagline': 'Internal tool for AI coding agent skills',
 
     // Home page
@@ -40,11 +42,28 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'detail.directDownload': 'Direct download',
     'detail.downloadTarball': 'Download tarball',
     'detail.readme': 'README',
+    'detail.backToSkills': '← Back to Skills',
+    'detail.radarAria': 'Category scores radar chart',
+    'detail.categoryFunctional': 'Functional',
+    'detail.categoryReliability': 'Reliability',
+    'detail.categoryPerformance': 'Performance',
+    'detail.categoryAiUsability': 'AI Usability',
+    'detail.categoryHumanUx': 'Human UX',
+    'detail.categorySecurity': 'Security',
+    'detail.categoryMaintainability': 'Maintainability',
+    'detail.categoryAgentSpecific': 'Agent-Spec.',
 
     // Errors
     'error.backHome': '← Back to Home',
+    'error.pageNotFound': 'Page Not Found',
+    'error.pageNotFoundMessage': 'The page you requested could not be found.',
     'error.skillNotFound': 'Skill Not Found',
     'error.skillNotAvailable': 'Skill "{name}" is not available.',
+
+    // Authentication
+    'auth.title': 'Login',
+    'auth.subtitle': 'Sign in to manage your skills and API tokens.',
+    'auth.github': 'Sign in with GitHub',
 
     // Settings
     'settings.accountSettings': 'Account Settings',
@@ -80,6 +99,17 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'admin.approve': 'Approve',
     'admin.reject': 'Reject',
     'admin.versionScore': 'v{version} · Score: {score} · Status:',
+    'admin.users': 'Users ({n})',
+    'admin.roleAdmin': 'Admin',
+    'admin.roleUser': 'User',
+    'admin.revokeAdmin': 'Revoke Admin',
+    'admin.grantAdmin': 'Grant Admin',
+
+    // Status values
+    'status.pending': 'Pending',
+    'status.approved': 'Approved',
+    'status.rejected': 'Rejected',
+    'status.needs_manual_review': 'Needs manual review',
   },
   zh: {
     // Layout / nav
@@ -87,6 +117,8 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'nav.browse': '浏览',
     'nav.settings': '设置',
     'nav.admin': '管理',
+    'nav.switchToEnglish': '切换到英文',
+    'nav.switchToChinese': '切换到中文',
     'footer.tagline': 'AI 编码代理技能内部工具',
 
     // Home page
@@ -115,11 +147,28 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'detail.directDownload': '直接下载',
     'detail.downloadTarball': '下载压缩包',
     'detail.readme': 'README',
+    'detail.backToSkills': '← 返回技能列表',
+    'detail.radarAria': '分类评分雷达图',
+    'detail.categoryFunctional': '功能适用性',
+    'detail.categoryReliability': '可靠性',
+    'detail.categoryPerformance': '性能',
+    'detail.categoryAiUsability': 'AI 可用性',
+    'detail.categoryHumanUx': '人类用户体验',
+    'detail.categorySecurity': '安全性',
+    'detail.categoryMaintainability': '可维护性',
+    'detail.categoryAgentSpecific': '代理专属',
 
     // Errors
     'error.backHome': '← 返回首页',
+    'error.pageNotFound': '页面未找到',
+    'error.pageNotFoundMessage': '您请求的页面不存在。',
     'error.skillNotFound': '技能未找到',
     'error.skillNotAvailable': '技能 "{name}" 不可用。',
+
+    // Authentication
+    'auth.title': '登录',
+    'auth.subtitle': '登录以管理您的技能和 API 令牌。',
+    'auth.github': '使用 GitHub 登录',
 
     // Settings
     'settings.accountSettings': '账户设置',
@@ -155,5 +204,16 @@ export const MESSAGES: Record<Locale, Record<string, string>> = {
     'admin.approve': '通过',
     'admin.reject': '拒绝',
     'admin.versionScore': 'v{version} · 评分：{score} · 状态：',
+    'admin.users': '用户（{n}）',
+    'admin.roleAdmin': '管理员',
+    'admin.roleUser': '用户',
+    'admin.revokeAdmin': '撤销管理员权限',
+    'admin.grantAdmin': '授予管理员权限',
+
+    // Status values
+    'status.pending': '待审核',
+    'status.approved': '已通过',
+    'status.rejected': '已拒绝',
+    'status.needs_manual_review': '需要人工审核',
   },
 };

@@ -1,6 +1,6 @@
 import { Layout } from './layout';
 import type { SkillResponse, User } from '../types/db';
-import type { TFunction } from '../i18n';
+import { translateStatus, type TFunction } from '../i18n';
 
 /** Home page with hero band and featured skills */
 export function HomePage({
@@ -39,7 +39,7 @@ export function HomePage({
           <h2 class="font-display text-display-sm text-ink mb-8">
             {t('home.recentSkills')}
           </h2>
-          <SkillGrid skills={skills} t={t} />
+          <SkillGrid skills={skills.slice(0, 6)} t={t} />
         </section>
       )}
     </Layout>
@@ -106,7 +106,7 @@ export function SkillDetailPage({
           href="/skills"
           class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"
         >
-          ← Back to Skills
+          {t('detail.backToSkills')}
         </a>
         <h1 class="font-display text-display-md text-ink mt-3 mb-2">{skill.name}</h1>
         <p class="text-bodycopy leading-relaxed">{skill.description}</p>
@@ -120,14 +120,14 @@ export function SkillDetailPage({
             <dl class="space-y-4">
               <DetailRow label={t('detail.version')} value={skill.latestVersion} mono />
               <DetailRow label={t('detail.score')} value={`${skill.latestScore}/100`} />
-              <DetailRow label={t('detail.status')} value={skill.reviewStatus} badge />
+              <DetailRow label={t('detail.status')} value={translateStatus(t, skill.reviewStatus)} badge />
               <DetailRow label={t('detail.compatibility')} value={skill.compatibility.join(', ')} />
               {skill.category && <DetailRow label={t('detail.category')} value={skill.category} />}
             </dl>
             {skill.categoryScores && (
               <div>
                 <h3 class="font-sans text-sm font-medium text-ink mb-2">{t('detail.scoresByCategory')}</h3>
-                <ScoreRadar scores={skill.categoryScores} />
+                <ScoreRadar scores={skill.categoryScores} t={t} />
               </div>
             )}
           </div>
@@ -213,14 +213,14 @@ export function ErrorPage({
  * (review-categories.ts in registry-core: criteria count × 4 per category).
  */
 const REVIEW_CATEGORIES = [
-  { id: 'functional-suitability', label: 'Functional', max: 12 },
-  { id: 'reliability', label: 'Reliability', max: 12 },
-  { id: 'performance', label: 'Performance', max: 8 },
-  { id: 'usability-ai', label: 'AI Usability', max: 16 },
-  { id: 'usability-human', label: 'Human UX', max: 8 },
-  { id: 'security', label: 'Security', max: 12 },
-  { id: 'maintainability', label: 'Maintainability', max: 12 },
-  { id: 'agent-specific', label: 'Agent-Spec.', max: 20 },
+  { id: 'functional-suitability', labelKey: 'detail.categoryFunctional', max: 12 },
+  { id: 'reliability', labelKey: 'detail.categoryReliability', max: 12 },
+  { id: 'performance', labelKey: 'detail.categoryPerformance', max: 8 },
+  { id: 'usability-ai', labelKey: 'detail.categoryAiUsability', max: 16 },
+  { id: 'usability-human', labelKey: 'detail.categoryHumanUx', max: 8 },
+  { id: 'security', labelKey: 'detail.categorySecurity', max: 12 },
+  { id: 'maintainability', labelKey: 'detail.categoryMaintainability', max: 12 },
+  { id: 'agent-specific', labelKey: 'detail.categoryAgentSpecific', max: 20 },
 ] as const;
 
 const RADAR_SIZE = 260;
@@ -238,7 +238,7 @@ function radarPoint(index: number, ratio: number) {
 }
 
 /** Radar (spider) chart of the 8 evaluation dimensions, pure SVG, no deps */
-function ScoreRadar({ scores }: { scores: Record<string, number> }) {
+function ScoreRadar({ scores, t }: { scores: Record<string, number>; t: TFunction }) {
   const toPoints = (ratio: number) =>
     REVIEW_CATEGORIES.map((_, i) => {
       const p = radarPoint(i, ratio);
@@ -255,7 +255,7 @@ function ScoreRadar({ scores }: { scores: Record<string, number> }) {
       viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
       class="w-full max-w-[280px] mx-auto"
       role="img"
-      aria-label="Category scores radar chart"
+      aria-label={t('detail.radarAria')}
     >
       {/* grid rings: 25% / 50% / 75% / 100% */}
       {[0.25, 0.5, 0.75, 1].map((ring) => (
@@ -312,7 +312,7 @@ function ScoreRadar({ scores }: { scores: Record<string, number> }) {
               font-size="10"
               font-family="Inter, sans-serif"
             >
-              {cat.label}
+              {t(cat.labelKey)}
               <tspan
                 x={labelP.x}
                 dy="10"

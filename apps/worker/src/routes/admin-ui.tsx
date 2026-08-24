@@ -6,11 +6,13 @@ import { UserRepository } from '../db-users';
 import { getSessionUser } from '../middleware/auth';
 import type { User } from '../types/db';
 import { Layout } from '../ui/layout';
-import { createT, detectLocale } from '../i18n';
+import { createT, detectLocale, translateStatus } from '../i18n';
 
 const adminUi = new Hono<HonoEnv>();
 
 async function requireLogin(c: Context<HonoEnv>): Promise<User> {
+  // Resolve the locale before redirecting unauthenticated users to login.
+  detectLocale(c);
   const user = await getSessionUser(c);
   if (!user) {
     c.redirect('/auth/login');
@@ -23,7 +25,7 @@ async function requireAdmin(c: Context<HonoEnv>): Promise<User> {
   const user = await requireLogin(c);
   if (user.is_admin !== 1) {
     const loginUser = await getSessionUser(c);
-    const t = createT(detectLocale(c));
+    const t = createT(detectLocale(c), c.req.url);
     c.html(
       <Layout title={t('admin.accessDenied')} user={loginUser} t={t}>
         <div class="text-center py-16 max-w-md mx-auto">
@@ -57,7 +59,7 @@ adminUi.get('/', async (c) => {
   const pending = allSkills.filter((s) => s.review_status !== 'approved');
   const users = await userRepo.listUsers();
 
-  const t = createT(detectLocale(c));
+  const t = createT(detectLocale(c), c.req.url);
 
   return c.html(
     <Layout title={t('nav.admin')} user={user} t={t}>
@@ -81,7 +83,7 @@ adminUi.get('/', async (c) => {
                   <p class="text-sm text-muted mt-1">
                     {t('admin.versionScore', { version: s.latest_version, score: s.latest_score })} {' '}
                     <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-accent-amber/15 text-accent-amber">
-                      {s.review_status}
+                      {translateStatus(t, s.review_status)}
                     </span>
                   </p>
                 </div>
@@ -91,7 +93,7 @@ adminUi.get('/', async (c) => {
                       type="submit"
                       class="inline-flex items-center px-4 py-2 bg-success text-on-primary text-sm font-medium rounded-md hover:bg-success/85 transition-colors"
                     >
-                      Approve
+                      {t('admin.approve')}
                     </button>
                   </form>
                   <form action={`/admin/actions/skills/${s.name}/reject`} method="post">
@@ -99,7 +101,7 @@ adminUi.get('/', async (c) => {
                       type="submit"
                       class="inline-flex items-center px-4 py-2 bg-[#b04545] text-on-primary text-sm font-medium rounded-md hover:bg-[#a03a3a] transition-colors"
                     >
-                      Reject
+                      {t('admin.reject')}
                     </button>
                   </form>
                 </div>
@@ -122,7 +124,7 @@ adminUi.get('/', async (c) => {
                   {s.name}
                 </a>
                 <span class="ml-2.5 inline-flex items-center px-2.5 py-0.5 text-xs rounded-pill bg-canvas text-muted">
-                  {s.review_status}
+                  {translateStatus(t, s.review_status)}
                 </span>
               </div>
               <span class="text-sm text-muted">v{s.latest_version}</span>
@@ -132,7 +134,7 @@ adminUi.get('/', async (c) => {
       </section>
 
       <section>
-        <h2 class="font-display text-display-sm text-ink mb-6">Users ({users.length})</h2>
+        <h2 class="font-display text-display-sm text-ink mb-6">{t('admin.users', { n: users.length })}</h2>
         <div class="bg-surface-card rounded-lg overflow-hidden">
           <table class="w-full text-sm">
             <thead>
@@ -153,11 +155,11 @@ adminUi.get('/', async (c) => {
                   <td class="px-5 py-3.5">
                     {u.is_admin ? (
                       <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-success/15 text-success">
-                        Admin
+                        {t('admin.roleAdmin')}
                       </span>
                     ) : (
                       <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-pill bg-surface-cream-strong text-muted">
-                        User
+                        {t('admin.roleUser')}
                       </span>
                     )}
                   </td>
@@ -168,7 +170,7 @@ adminUi.get('/', async (c) => {
                           type="submit"
                           class="text-xs font-medium text-primary hover:underline"
                         >
-                          {u.is_admin ? 'Revoke Admin' : 'Grant Admin'}
+                          {u.is_admin ? t('admin.revokeAdmin') : t('admin.grantAdmin')}
                         </button>
                       </form>
                     )}
