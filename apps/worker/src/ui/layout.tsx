@@ -1,14 +1,17 @@
 import type { User } from '../types/db';
+import type { TFunction } from '../i18n';
 
 export interface LayoutProps {
   title: string;
   children?: unknown;
   user?: User | null;
+  t: TFunction;
 }
 
-export function Layout({ title, children, user }: LayoutProps) {
+export function Layout({ title, children, user, t }: LayoutProps) {
+  const locale = t.locale;
   return (
-    <html lang="zh-CN">
+    <html lang={locale === 'zh' ? 'zh-CN' : 'en'}>
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -125,14 +128,14 @@ tailwind.config = {
                 href="/skills"
                 class="text-sm font-medium text-ink hover:text-primary transition-colors"
               >
-                Browse
+                {t('nav.browse')}
               </a>
               {user && (
                 <a
                   href="/settings"
                   class="text-sm font-medium text-ink hover:text-primary transition-colors"
                 >
-                  Settings
+                  {t('nav.settings')}
                 </a>
               )}
               {user && user.is_admin === 1 && (
@@ -140,9 +143,17 @@ tailwind.config = {
                   href="/admin"
                   class="text-sm font-medium text-ink hover:text-primary transition-colors"
                 >
-                  Admin
+                  {t('nav.admin')}
                 </a>
               )}
+              {/* Language switcher */}
+              <a
+                href={t.switchHref}
+                class="text-sm font-medium text-muted hover:text-primary transition-colors"
+                title={locale === 'zh' ? t('nav.switchToEnglish') : t('nav.switchToChinese')}
+              >
+                {locale === 'zh' ? 'EN' : '中文'}
+              </a>
             </div>
           </div>
         </nav>
@@ -171,7 +182,7 @@ tailwind.config = {
               </svg>
               <span class="font-display text-lg tracking-tight text-on-dark">Skill Registry</span>
             </div>
-            <p class="text-sm">Internal tool for AI coding agent skills</p>
+            <p class="text-sm">{t('footer.tagline')}</p>
           </div>
         </footer>
       </body>

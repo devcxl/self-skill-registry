@@ -1,27 +1,35 @@
 import { Layout } from './layout';
 import type { SkillResponse, User } from '../types/db';
+import { translateStatus, type TFunction } from '../i18n';
 
 /** Home page with hero band and featured skills */
-export function HomePage({ skills, user }: { skills: SkillResponse[]; user?: User | null }) {
+export function HomePage({
+  skills,
+  user,
+  t,
+}: {
+  skills: SkillResponse[];
+  user?: User | null;
+  t: TFunction;
+}) {
   return (
-    <Layout title="Home" user={user}>
+    <Layout title={t('nav.home')} user={user} t={t}>
       {/* ── Hero Band ──────────────────────────────── */}
       <section class="text-center max-w-2xl mx-auto mb-16">
         <h1 class="font-display text-display-xl text-ink mb-6">
           Skill Registry
         </h1>
         <p class="text-lg text-muted mb-10 leading-relaxed max-w-xl mx-auto">
-          Internal skill marketplace for AI coding agents. Browse, evaluate, and
-          install skills for OpenCode, Claude Code, and Codex.
+          {t('home.hero')}
         </p>
         <div class="flex justify-center items-center gap-5">
           <a
             href="/skills"
             class="inline-flex items-center px-5 py-3 bg-primary text-on-primary rounded-md text-sm font-medium hover:bg-primary-active transition-colors"
           >
-            Browse Skills
+            {t('home.browseCta')}
           </a>
-          <span class="text-muted text-sm">{skills.length} skills available</span>
+          <span class="text-muted text-sm">{t('home.skillsAvailable', { n: skills.length })}</span>
         </div>
       </section>
 
@@ -29,9 +37,9 @@ export function HomePage({ skills, user }: { skills: SkillResponse[]; user?: Use
       {skills.length > 0 && (
         <section>
           <h2 class="font-display text-display-sm text-ink mb-8">
-            Recent Skills
+            {t('home.recentSkills')}
           </h2>
-          <SkillGrid skills={skills.slice(0, 6)} />
+          <SkillGrid skills={skills.slice(0, 6)} t={t} />
         </section>
       )}
     </Layout>
@@ -44,17 +52,19 @@ export function SkillsPage({
   total,
   query,
   user,
+  t,
 }: {
   skills: SkillResponse[];
   total: number;
   query?: { q?: string; category?: string; page?: number; perPage?: number };
   user?: User | null;
+  t: TFunction;
 }) {
   return (
-    <Layout title="Skills" user={user}>
+    <Layout title={t('skills.title')} user={user} t={t}>
       <div class="mb-10">
-        <h1 class="font-display text-display-md text-ink mb-2">Skills</h1>
-        <p class="text-muted">{total} skill(s) available</p>
+        <h1 class="font-display text-display-md text-ink mb-2">{t('skills.title')}</h1>
+        <p class="text-muted">{t('skills.count', { n: total })}</p>
       </div>
 
       {/* ── Search Form ────────────────────────────── */}
@@ -63,32 +73,40 @@ export function SkillsPage({
           type="text"
           name="q"
           value={query?.q || ''}
-          placeholder="Search skills…"
+          placeholder={t('skills.searchPlaceholder')}
           class="flex-grow px-3.5 py-2.5 bg-canvas text-ink text-sm border border-hairline rounded-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-shadow"
         />
         <button
           type="submit"
           class="inline-flex items-center px-5 py-2.5 bg-primary text-on-primary rounded-md text-sm font-medium hover:bg-primary-active transition-colors"
         >
-          Search
+          {t('skills.search')}
         </button>
       </form>
 
-      <SkillGrid skills={skills} />
+      <SkillGrid skills={skills} t={t} />
     </Layout>
   );
 }
 
 /** Skill detail page */
-export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: User | null }) {
+export function SkillDetailPage({
+  skill,
+  user,
+  t,
+}: {
+  skill: SkillResponse;
+  user?: User | null;
+  t: TFunction;
+}) {
   return (
-    <Layout title={skill.name} user={user}>
+    <Layout title={skill.name} user={user} t={t}>
       <div class="mb-10">
         <a
           href="/skills"
           class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"
         >
-          ← Back to Skills
+          {t('detail.backToSkills')}
         </a>
         <h1 class="font-display text-display-md text-ink mt-3 mb-2">{skill.name}</h1>
         <p class="text-bodycopy leading-relaxed">{skill.description}</p>
@@ -97,19 +115,19 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* ── Details Card (feature-card) ──────────── */}
         <div class="bg-surface-card rounded-lg p-8">
-          <h2 class="font-sans text-lg font-medium text-ink mb-6">Details</h2>
+          <h2 class="font-sans text-lg font-medium text-ink mb-6">{t('detail.details')}</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <dl class="space-y-4">
-              <DetailRow label="Version" value={skill.latestVersion} mono />
-              <DetailRow label="Score" value={`${skill.latestScore}/100`} />
-              <DetailRow label="Status" value={skill.reviewStatus} badge />
-              <DetailRow label="Compatibility" value={skill.compatibility.join(', ')} />
-              {skill.category && <DetailRow label="Category" value={skill.category} />}
+              <DetailRow label={t('detail.version')} value={skill.latestVersion} mono />
+              <DetailRow label={t('detail.score')} value={`${skill.latestScore}/100`} />
+              <DetailRow label={t('detail.status')} value={translateStatus(t, skill.reviewStatus)} badge />
+              <DetailRow label={t('detail.compatibility')} value={skill.compatibility.join(', ')} />
+              {skill.category && <DetailRow label={t('detail.category')} value={skill.category} />}
             </dl>
             {skill.categoryScores && (
               <div>
-                <h3 class="font-sans text-sm font-medium text-ink mb-2">Scores by Category</h3>
-                <ScoreRadar scores={skill.categoryScores} />
+                <h3 class="font-sans text-sm font-medium text-ink mb-2">{t('detail.scoresByCategory')}</h3>
+                <ScoreRadar scores={skill.categoryScores} t={t} />
               </div>
             )}
           </div>
@@ -117,17 +135,17 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
 
         {/* ── Install Card (code-window-card) ──────── */}
         <div class="bg-surface-dark rounded-lg p-6">
-          <h2 class="font-sans text-lg font-medium text-on-dark mb-6">Install</h2>
-          <p class="text-on-dark-soft text-xs mb-1.5">CLI command</p>
+          <h2 class="font-sans text-lg font-medium text-on-dark mb-6">{t('detail.install')}</h2>
+          <p class="text-on-dark-soft text-xs mb-1.5">{t('detail.cliCommand')}</p>
           <pre class="bg-surface-dark-soft text-on-dark p-4 rounded-md text-sm font-mono overflow-x-auto mb-5 leading-relaxed">
             npx skills add devcxl/self-skill-registry --skill {skill.name}
           </pre>
-          <p class="text-on-dark-soft text-xs mb-1.5">Direct download</p>
+          <p class="text-on-dark-soft text-xs mb-1.5">{t('detail.directDownload')}</p>
           <a
             href={`/v1/skills/${skill.name}/download?version=${skill.latestVersion}`}
             class="text-primary text-sm font-medium hover:underline"
           >
-            Download tarball
+            {t('detail.downloadTarball')}
           </a>
         </div>
       </div>
@@ -135,7 +153,7 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
       {/* ── README Section ─────────────────────────── */}
       {skill.readme && (
         <div class="mt-10">
-          <h2 class="font-display text-display-sm text-ink mb-6">README</h2>
+          <h2 class="font-display text-display-sm text-ink mb-6">{t('detail.readme')}</h2>
           <div class="bg-surface-card rounded-lg p-8">
             <script
               id="skill-readme"
@@ -161,9 +179,19 @@ export function SkillDetailPage({ skill, user }: { skill: SkillResponse; user?: 
 }
 
 /** Error page */
-export function ErrorPage({ title, message, user }: { title: string; message: string; user?: User | null }) {
+export function ErrorPage({
+  title,
+  message,
+  user,
+  t,
+}: {
+  title: string;
+  message: string;
+  user?: User | null;
+  t: TFunction;
+}) {
   return (
-    <Layout title={title} user={user}>
+    <Layout title={title} user={user} t={t}>
       <div class="text-center py-16 max-w-md mx-auto">
         <h1 class="font-display text-display-sm text-ink mb-4">{title}</h1>
         <p class="text-muted mb-8">{message}</p>
@@ -171,7 +199,7 @@ export function ErrorPage({ title, message, user }: { title: string; message: st
           href="/"
           class="inline-flex items-center px-5 py-3 bg-canvas text-ink border border-hairline rounded-md text-sm font-medium hover:bg-surface-soft transition-colors"
         >
-          ← Back to Home
+          {t('error.backHome')}
         </a>
       </div>
     </Layout>
@@ -185,14 +213,14 @@ export function ErrorPage({ title, message, user }: { title: string; message: st
  * (review-categories.ts in registry-core: criteria count × 4 per category).
  */
 const REVIEW_CATEGORIES = [
-  { id: 'functional-suitability', label: 'Functional', max: 12 },
-  { id: 'reliability', label: 'Reliability', max: 12 },
-  { id: 'performance', label: 'Performance', max: 8 },
-  { id: 'usability-ai', label: 'AI Usability', max: 16 },
-  { id: 'usability-human', label: 'Human UX', max: 8 },
-  { id: 'security', label: 'Security', max: 12 },
-  { id: 'maintainability', label: 'Maintainability', max: 12 },
-  { id: 'agent-specific', label: 'Agent-Spec.', max: 20 },
+  { id: 'functional-suitability', labelKey: 'detail.categoryFunctional', max: 12 },
+  { id: 'reliability', labelKey: 'detail.categoryReliability', max: 12 },
+  { id: 'performance', labelKey: 'detail.categoryPerformance', max: 8 },
+  { id: 'usability-ai', labelKey: 'detail.categoryAiUsability', max: 16 },
+  { id: 'usability-human', labelKey: 'detail.categoryHumanUx', max: 8 },
+  { id: 'security', labelKey: 'detail.categorySecurity', max: 12 },
+  { id: 'maintainability', labelKey: 'detail.categoryMaintainability', max: 12 },
+  { id: 'agent-specific', labelKey: 'detail.categoryAgentSpecific', max: 20 },
 ] as const;
 
 const RADAR_SIZE = 260;
@@ -210,7 +238,7 @@ function radarPoint(index: number, ratio: number) {
 }
 
 /** Radar (spider) chart of the 8 evaluation dimensions, pure SVG, no deps */
-function ScoreRadar({ scores }: { scores: Record<string, number> }) {
+function ScoreRadar({ scores, t }: { scores: Record<string, number>; t: TFunction }) {
   const toPoints = (ratio: number) =>
     REVIEW_CATEGORIES.map((_, i) => {
       const p = radarPoint(i, ratio);
@@ -227,7 +255,7 @@ function ScoreRadar({ scores }: { scores: Record<string, number> }) {
       viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
       class="w-full max-w-[280px] mx-auto"
       role="img"
-      aria-label="Category scores radar chart"
+      aria-label={t('detail.radarAria')}
     >
       {/* grid rings: 25% / 50% / 75% / 100% */}
       {[0.25, 0.5, 0.75, 1].map((ring) => (
@@ -284,7 +312,7 @@ function ScoreRadar({ scores }: { scores: Record<string, number> }) {
               font-size="10"
               font-family="Inter, sans-serif"
             >
-              {cat.label}
+              {t(cat.labelKey)}
               <tspan
                 x={labelP.x}
                 dy="10"
@@ -332,11 +360,11 @@ function DetailRow({
   );
 }
 
-function SkillGrid({ skills }: { skills: SkillResponse[] }) {
+function SkillGrid({ skills, t }: { skills: SkillResponse[]; t: TFunction }) {
   if (skills.length === 0) {
     return (
       <div class="text-center py-12 text-muted bg-surface-soft rounded-lg">
-        No skills found.
+        {t('skills.empty')}
       </div>
     );
   }
